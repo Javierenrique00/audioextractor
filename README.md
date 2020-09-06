@@ -1,8 +1,8 @@
 # audioextractor
 
-AudioExtractor is an experiment/exercise to use node-ytdl-core library to have a microservice for extraction audio from video streams.
+AudioExtractor is an experiment/exercise to use node-ytdl-core library to have a microservice for audio extraction from video streams.
 
-Audio extractor is ready to be deployed locally, in Docker containers or a Kubernetes cluter.
+Ready to be deployed locally, in docker containers or a Kubernetes cluster.
 
 ## Local installation.
 
@@ -30,5 +30,8 @@ Kubernetes cluster with kubectl commnand
     kubectl get services      -->(to see the external ip)
 
 ## USE
+
+From a browser
+
 
 
