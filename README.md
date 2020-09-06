@@ -40,6 +40,12 @@ Kubernetes cluster with kubectl commnand
         
 3- The browser shows a player with the audio.
 
+![Img](/doc/imgs/img1.jpg)
 
 
+## Android App
 
+There is a small free android App that you can use to invoque the audioextractor server.
+
+see:
+https://github.com/Javierenrique00/grabwaves
