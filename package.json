@@ -1,0 +1,16 @@
+{
+  "name": "ytdl",
+  "version": "1.0.1",
+  "description": "server module for youtube downloades",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Javier Ramirez",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1",
+    "moment": "^2.27.0",
+    "ytdl-core": "^3.2.2"
+  }
+}
