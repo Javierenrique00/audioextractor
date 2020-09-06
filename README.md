@@ -16,6 +16,7 @@ node / npm
 
 ## Docker installation
 
+See docker hub: https://hub.docker.com/repository/docker/javierenrique00/audioextractor-js
 Prerequisites:
 Docker
 
@@ -25,13 +26,20 @@ Docker
 ## Kubernetes installation
 Kubernetes cluster with kubectl commnand
 
-    kubectl apply -f kube
+    kubectl apply -f kube     -->(To install)
 
     kubectl get services      -->(to see the external ip)
 
 ## USE
 
-From a browser
+1- Install audioextractor server.
+2- In the browser type: http://<SERVER_IP>:2000/?link=<BASE64ENCODED_VIDEO_URL_PATH>
+        
+        Example: http://192.168.0.68:2000/?link=aHR0cHM6Ly93d3cueW91dHViZS5jb20vd2F0Y2g/dj1SZFNyc09salZtbw==
+        where Base64("https://www.youtube.com/watch?v=RdSrsOljVmo") = aHR0cHM6Ly93d3cueW91dHViZS5jb20vd2F0Y2g/dj1SZFNyc09salZtbw==
+        
+3- The browser shows a player with the audio.
+
 
 
 
