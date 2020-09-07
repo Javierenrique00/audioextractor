@@ -38,7 +38,7 @@ Kubernetes cluster with kubectl commnand
         Example: http://192.168.0.68:2000/?link=aHR0cHM6Ly93d3cueW91dHViZS5jb20vd2F0Y2g/dj1SZFNyc09salZtbw==&q=lq
         where Base64("https://www.youtube.com/watch?v=RdSrsOljVmo") = aHR0cHM6Ly93d3cueW91dHViZS5jb20vd2F0Y2g/dj1SZFNyc09salZtbw==
         
-        QUALITY could be [lq,hq] to low quality and hq for hight quality
+        QUALITY could be [lq,hq] to low quality and hq for high quality
 
 3- The browser shows a player with the audio.
 
