@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: audioextractor
-        image: javierenrique00/audioextractor-js:1.0.2
+        image: javierenrique00/audioextractor-js:1.0.3
         resources:
         ports:
         - containerPort: 2000

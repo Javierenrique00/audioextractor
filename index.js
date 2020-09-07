@@ -11,7 +11,7 @@ var moment = require('moment')
 const BASE_AUDIO_PATH = "audio"
 const PORT = 2000
 const MAX_HOURS_FILES = 24
-const VERSION = "1.0.2"
+const VERSION = "1.0.3"
 
 app.get('/',function(req,res){
     
@@ -45,7 +45,7 @@ function convertToAudioFile(address,res,hq){
         let total = 0
         let calidad = 'lowestaudio'
         if(hq) calidad = 'highestaudio'
-        let convStream = ytdl(address,{ filter: 'audio' , quality: calidad})
+        let convStream = ytdl(address,{ filter: 'audioonly' , quality: calidad})
 
         let writeStream = fs.createWriteStream(fileLocalPath)
 
