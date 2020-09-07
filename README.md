@@ -33,7 +33,7 @@ Kubernetes cluster with kubectl commnand
 ## USE
 
 1- Install audioextractor server.
-2- In the browser type: http://<SERVER_IP>:2000/?link=<BASE64ENCODED_VIDEO_URL_PATH>&q=<QUALITY>
+2- In the browser type: http://<SERVER_IP>:2000/?link=BASE64ENCODED_VIDEO_URL_PATH&q=QUALITY
         
         Example: http://192.168.0.68:2000/?link=aHR0cHM6Ly93d3cueW91dHViZS5jb20vd2F0Y2g/dj1SZFNyc09salZtbw==&q=lq
         where Base64("https://www.youtube.com/watch?v=RdSrsOljVmo") = aHR0cHM6Ly93d3cueW91dHViZS5jb20vd2F0Y2g/dj1SZFNyc09salZtbw==
