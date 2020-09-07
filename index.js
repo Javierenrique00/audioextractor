@@ -11,7 +11,7 @@ var moment = require('moment')
 const BASE_AUDIO_PATH = "audio"
 const PORT = 2000
 const MAX_HOURS_FILES = 24
-const VERSION = "1.0.1"
+const VERSION = "1.0.2"
 
 app.get('/',function(req,res){
     
@@ -19,27 +19,33 @@ app.get('/',function(req,res){
     let linkBase64 = req.query.link
     let buff = Buffer.from(linkBase64, 'base64')
     let link = buff.toString('ascii')
-    convertToAudioFile(link,res)
+    //---Parameter q   -> Calidad
+    let qualityStr = req.query.q
+    let hq = (qualityStr==="hq") 
+
+    convertToAudioFile(link,res,hq)
 })
 
 console.log("--- audioextractor ---")
 console.log("Version:"+VERSION)
 console.log("Listening port:"+PORT)
-console.log("Purgue files older than: "+MAX_HOURS_FILES + " Hours")
+console.log("Purge files older than: "+MAX_HOURS_FILES + " Hours")
 console.log("----------------------")
 var server = app.listen(PORT,function(){ })
 
 
 
-function convertToAudioFile(address,res){
+function convertToAudioFile(address,res,hq){
 
     createDir(BASE_AUDIO_PATH)
-    let hash = createHash(address) + ".mp3"
+    let hash = createHash(address) + (hq ? "hq" : "lq") + ".mp3"
     let fileLocalPath = BASE_AUDIO_PATH + path.sep + hash
 
     if(!fs.existsSync(fileLocalPath)){
         let total = 0
-        let convStream = ytdl(address,{ filter: 'audio' , quality: 'lowestaudio'})
+        let calidad = 'lowestaudio'
+        if(hq) calidad = 'highestaudio'
+        let convStream = ytdl(address,{ filter: 'audio' , quality: calidad})
 
         let writeStream = fs.createWriteStream(fileLocalPath)
 
