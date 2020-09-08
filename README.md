@@ -20,7 +20,7 @@ See docker hub: https://hub.docker.com/repository/docker/javierenrique00/audioex
 Prerequisites:
 Docker
 
-    docker run --name myaudioextractor --rm -p 2000:2000 -d javierenrique00/audioextractor-js:1.0.3
+    docker run --name myaudioextractor --rm -p 2000:2000 -d javierenrique00/audioextractor-js:1.0.4
 
 
 ## Kubernetes installation
@@ -30,7 +30,7 @@ Kubernetes cluster with kubectl commnand
 
     kubectl get services      -->(to see the external ip)
 
-## USE
+## EXTRACTING AUDIO
 
 1- Install audioextractor server.
 2- In the browser type: http://<SERVER_IP>:2000/?link=BASE64ENCODED_VIDEO_URL_PATH&q=QUALITY
@@ -43,6 +43,38 @@ Kubernetes cluster with kubectl commnand
 3- The browser shows a player with the audio.
 
 ![Img](/doc/imgs/img1.jpg)
+
+## EXTRACTING VIDEO INFO AND RELATED VIDEOS
+
+1- With the server installed and running goes to the info Route:  http://<SERVER_IP>:2000/info?link=BASE64ENCODED_VIDEO_URL_PATH
+2- You receive a Json data with the following information.
+
+        {
+        "title":"We fixed Windows 10 - Microsoft will HATE this!",
+        "channel":"Linus Tech Tips",
+        "thumbnailUrl":"https://i.ytimg.com/vi/nwkiU6GG-YU/hqdefault.jpg?sqp=-oaymwEiCKgBEF5IWvKriqkDFQgBFQAAAAAYASUAAMhCPQCAokN4AQ==&rs=AOn4CLDXmkGZTBOjmYkBxGABrat8viNZrA",
+        "width":168,
+        "height":94,
+        "duration":"1016",
+        "related":[
+            {
+                "id":"Lzf1Pg9kfu4",
+                "title":"Game Theory: Dear Fall Guys, I Fixed Your Game!",
+                "author":"The Game Theorists",
+                "duration":1009
+            },
+            {
+                "id":"ntXj6EJgh0c",
+                "title":"Confused about NVIDIA’s new video cards? You’re not alone",
+                "author":"JayzTwoCents",
+                "duration":1271
+            },
+                ...
+                ...
+                
+        ]
+        }
+
 
 
 ## Android App

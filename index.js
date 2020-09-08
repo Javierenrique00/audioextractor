@@ -7,11 +7,12 @@ const path = require('path')
 const ytdl = require('ytdl-core')
 var crypto = require('crypto')
 var moment = require('moment')
+const { get } = require('http')
 
 const BASE_AUDIO_PATH = "audio"
 const PORT = 2000
 const MAX_HOURS_FILES = 24
-const VERSION = "1.0.3"
+const VERSION = "1.0.4"
 
 app.get('/',function(req,res){
     
@@ -26,6 +27,17 @@ app.get('/',function(req,res){
     convertToAudioFile(link,res,hq)
 })
 
+app.get('/info',function(req,res){
+
+    //---Parameter link
+    let linkBase64 = req.query.link
+    let buff = Buffer.from(linkBase64, 'base64')
+    let link = buff.toString('ascii')
+    getBasicInfo(link,res)
+})
+
+
+
 console.log("--- audioextractor ---")
 console.log("Version:"+VERSION)
 console.log("Listening port:"+PORT)
@@ -33,6 +45,33 @@ console.log("Purge files older than: "+MAX_HOURS_FILES + " Hours")
 console.log("----------------------")
 var server = app.listen(PORT,function(){ })
 
+
+function getBasicInfo(address,res){
+    let info = ytdl.getBasicInfo(address)
+    
+    info.then(
+        result =>{
+            let related = []
+            let relacionados = result.related_videos
+            relacionados.forEach( it =>{
+                related.push({id:it.id,
+                            title:it.title,
+                            author:it.author,
+                            duration:it.length_seconds})
+            })
+            let videoDetails = result.videoDetails
+            let videoInfo = {title:videoDetails.title,
+                 channel:videoDetails.ownerChannelName,
+                 thumbnailUrl:videoDetails.thumbnail.thumbnails[0].url,
+                 width:videoDetails.thumbnail.thumbnails[0].width,
+                 height:videoDetails.thumbnail.thumbnails[0].height,
+                 duration:videoDetails.lengthSeconds,
+                 related:related
+                 }
+                 res.send(JSON.stringify(videoInfo))
+        }
+    )
+}
 
 
 function convertToAudioFile(address,res,hq){
