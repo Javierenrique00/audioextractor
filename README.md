@@ -20,7 +20,7 @@ See docker hub: https://hub.docker.com/repository/docker/javierenrique00/audioex
 Prerequisites:
 Docker
 
-    docker run --name myaudioextractor --rm -p 2000:2000 -d javierenrique00/audioextractor-js:1.0.8
+    docker run --name myaudioextractor --rm -p 2000:2000 -d javierenrique00/audioextractor-js:1.0.9
 
 
 ## Kubernetes installation

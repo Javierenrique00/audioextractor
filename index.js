@@ -8,11 +8,13 @@ const ytdl = require('ytdl-core')
 var crypto = require('crypto')
 var moment = require('moment')
 const { get } = require('http')
+var MapCache = require('map-cache')
+var cache = new MapCache()
 
 const BASE_AUDIO_PATH = "audio"
 const PORT = 2000
 const MAX_HOURS_FILES = 24
-const VERSION = "1.0.8"
+const VERSION = "1.0.9"
 
 app.get('/',function(req,res){
     
@@ -63,7 +65,7 @@ function getBasicInfo(address,res){
                 related.push({id:it.id,
                             title:it.title,
                             author:it.author,
-                            duration:it.length_seconds})
+                            duration:0})
             })
             let videoDetails = result.videoDetails
             let videoInfo = {title:videoDetails.title,
@@ -71,7 +73,7 @@ function getBasicInfo(address,res){
                  thumbnailUrl:videoDetails.thumbnail.thumbnails[0].url,
                  width:videoDetails.thumbnail.thumbnails[0].width,
                  height:videoDetails.thumbnail.thumbnails[0].height,
-                 duration:videoDetails.lengthSeconds,
+                 duration:0,
                  related:related
                  }
                  //res.setHeader('Content-Type', 'application/json')
@@ -122,7 +124,7 @@ function convertToAudioFile(address,res,hq){
         creaServer(fileLocalPath,res)
     }
 
-    purgueFiles(BASE_AUDIO_PATH)
+    //purgueFiles(BASE_AUDIO_PATH)
 }
 
 function creaServer(fileLocalPath,res){
@@ -133,6 +135,7 @@ function creaServer(fileLocalPath,res){
         'Content-Length': stat.size
     });
     fs.createReadStream(fileLocalPath).pipe(res);
+    purgueFiles(BASE_AUDIO_PATH,fileLocalPath)
   }
 
 
@@ -162,28 +165,40 @@ function readableBytes(bytes) {
     return (bytes / Math.pow(1024, i)).toFixed(2) * 1 + ' ' + sizes[i];
 }
 
-function purgueFiles(directory){
+function purgueFiles(directory,nodelete){
     let ahora = moment()
+    cache.set(nodelete,ahora)
+
     console.log("purging directory:"+directory)
     fs.readdir(directory,(err, files) => {
         if(!err){
             files.forEach( file => {
                 let filePath = directory + path.sep +file
-                fs.stat(filePath,function(err,stats){
-                    if(!err){
-                        let fileCreation = moment(stats.mtime)
-                        let durTime = moment.duration(ahora.diff(fileCreation))
-                        if(durTime.as('hours')>MAX_HOURS_FILES){
-                            deleteFile(filePath,durTime)
 
-                        }
-                        //---borrar archivos en cero o muy pequeños
-                        if((stats.size<1000)&&(stats.size>=0)){
-                            deleteFile(filePath,durTime)
-                        }
+                if(cache.has(filePath)){
+                    let cacheDurTime = moment.duration(ahora.diff(cache.get(filePath)))
+                    if(cacheDurTime.as('hours')>MAX_HOURS_FILES){
 
                     }
-                })
+                }else{
+                    //--- no está en el cache y por tanto hay que mirar la hora de escritura
+                    fs.stat(filePath,function(err,stats){
+                        if(!err){
+                            let fileCreation = moment(stats.mtime)
+                            let durTime = moment.duration(ahora.diff(fileCreation))
+                            if(durTime.as('hours')>MAX_HOURS_FILES){
+                                deleteFile(filePath,durTime)
+    
+                            }
+                            //---borrar archivos en cero o muy pequeños
+                            if((stats.size<1000)&&(stats.size>=0)){
+                                deleteFile(filePath,durTime)
+                            }
+    
+                        }
+                    })
+
+                }
     
             })
         }
@@ -195,6 +210,8 @@ function deleteFile(path,durTime){
     fs.unlink(path, (err) => {
         if(!err){
             console.log("Deleted file:" + path + " Duration (Hours):" + durTime.as('hours'))
+            //--- trata de sacarlo del cache
+            cache.del(path)
         }
     })
 }
