@@ -12,7 +12,7 @@ const { get } = require('http')
 const BASE_AUDIO_PATH = "audio"
 const PORT = 2000
 const MAX_HOURS_FILES = 24
-const VERSION = "1.0.4"
+const VERSION = "1.0.5"
 
 app.get('/',function(req,res){
     
