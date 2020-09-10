@@ -68,7 +68,9 @@ function getBasicInfo(address,res){
                  duration:videoDetails.lengthSeconds,
                  related:related
                  }
-                 res.send(JSON.stringify(videoInfo))
+                 //res.setHeader('Content-Type', 'application/json')
+                 res.type('json')
+                 res.end(JSON.stringify(videoInfo))
         }
     )
 }
