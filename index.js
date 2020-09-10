@@ -12,12 +12,15 @@ const { get } = require('http')
 const BASE_AUDIO_PATH = "audio"
 const PORT = 2000
 const MAX_HOURS_FILES = 24
-const VERSION = "1.0.5"
+const VERSION = "1.0.8"
 
 app.get('/',function(req,res){
     
     //---Parameter link
-    let linkBase64 = req.query.link
+    let linkforReplace1 = req.query.link
+    let linkforReplace2 = linkforReplace1.replace("-","/")
+    let linkBase64 = linkforReplace2.replace("_","+")
+
     let buff = Buffer.from(linkBase64, 'base64')
     let link = buff.toString('ascii')
     //---Parameter q   -> Calidad
@@ -30,7 +33,10 @@ app.get('/',function(req,res){
 app.get('/info',function(req,res){
 
     //---Parameter link
-    let linkBase64 = req.query.link
+    let linkforReplace1 = req.query.link
+    let linkforReplace2 = linkforReplace1.replace("-","/")
+    let linkBase64 = linkforReplace2.replace("_","+")
+
     let buff = Buffer.from(linkBase64, 'base64')
     let link = buff.toString('ascii')
     getBasicInfo(link,res)
@@ -86,20 +92,30 @@ function convertToAudioFile(address,res,hq){
         let total = 0
         let calidad = 'lowestaudio'
         if(hq) calidad = 'highestaudio'
-        let convStream = ytdl(address,{ filter: 'audioonly' , quality: calidad})
+        console.log('Asking for video:' + address)
+        try {
+            let convStream = ytdl(address,{ filter: 'audioonly' , quality: calidad})
 
-        let writeStream = fs.createWriteStream(fileLocalPath)
+            let writeStream = fs.createWriteStream(fileLocalPath)
 
-        convStream.on('data', (data) => {
-            writeStream.write(data)
-            total = total + data.length
-        })
+            convStream.on('data', (data) => {
+                if(total==0) {
+                    writeStream = fs.createWriteStream(fileLocalPath)
+                }
 
-        convStream.on('finish', () =>{
-            writeStream.end()
-            console.log('data converted finished:'+ readableBytes( total ))
-            creaServer(fileLocalPath,res)
-        })
+                writeStream.write(data)
+                total = total + data.length
+            })
+
+            convStream.on('finish', () =>{
+                writeStream.end()
+                console.log('data converted finished:'+ readableBytes( total ))
+                creaServer(fileLocalPath,res)
+            })
+        }catch(err){
+            console.error(err.message)
+            deleteFile(fileLocalPath,0)
+        }
     }
     else{
         console.log('File already loaded:' + address)
@@ -161,6 +177,11 @@ function purgueFiles(directory){
                             deleteFile(filePath,durTime)
 
                         }
+                        //---borrar archivos en cero o muy pequeños
+                        if((stats.size<1000)&&(stats.size>=0)){
+                            deleteFile(filePath,durTime)
+                        }
+
                     }
                 })
     
