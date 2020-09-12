@@ -12,6 +12,7 @@
     "express": "^4.17.1",
     "map-cache": "^0.2.2",
     "moment": "^2.27.0",
-    "ytdl-core": "^3.2.2"
+    "ytdl-core": "^3.2.2",
+    "ytsr": "^1.0.1"
   }
 }

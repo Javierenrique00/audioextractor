@@ -77,6 +77,51 @@ __***Important Encoded64 is replacing the / and + characteres for - and _ charac
         ]
         }
 
+## SEARCHING FOR VIDEOS BY DESCRIPTION OR CHANNEL
+
+With the server running go to thr following route: http://<SERVER_IP>:2000/search/?question=BASE64ENCODED_VIDEO_URL_PATH&limit=XX
+
+        "query": "Queenxxx",
+        "currentRef": "https://www.youtube.com/results?search_query=cggggggEgIQAQ%253D%253D",
+        "items": [
+            {
+            "type": "video",
+            "live": false,
+            "title": "XXXXX TITLE",
+            "link": "https://www.youtube.com/watch?v=LjhgggNtRIYxsI",
+            "thumbnail": "https://i.ytimg.com/vi/LjhNtRhhhhsI/hqdefault.jpg?sqp=-oaymwEjCPYBEIoBSFrhhhhpAxUIARUAAAAAGAElAADIQj0AgKJDeAE=&rs=AOn4CLDUoqxWsW5f9Cr4e5L3BZPZFr_96Q",
+            "author": {
+                "name": "YYYYYYY",
+                "ref": "https://www.youtube.com/channel/UCYxixhfkXxp2hhhqJyg",
+                "verified": false
+            },
+            "description": "xxxxxx: ...",
+            "views": 39622,
+            "duration": "16:22",
+            "uploaded_at": "1 year ago"
+            },
+            {
+            "type": "video",
+            "live": false,
+            "title": " fdfffffffto",
+            .....
+            .....
+            .....
+        "results": "0",
+        "filters": [
+            {
+            "ref": null,
+            "name": "Video",
+            "active": true
+            },
+            {
+            "ref": null,
+            "name": "Relevance",
+            "active": true
+            }
+        ],
+        "nextpageRef": "/results?search_query=cxxxxxxxgIQAQ%253D%253D&page=2"
+        }
 
 
 ## Android App

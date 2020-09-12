@@ -10,11 +10,13 @@ var moment = require('moment')
 const { get } = require('http')
 var MapCache = require('map-cache')
 var cache = new MapCache()
+const ytsr = require('ytsr')
+const { doesNotThrow } = require('assert')
 
 const BASE_AUDIO_PATH = "audio"
 const PORT = 2000
 const MAX_HOURS_FILES = 24
-const VERSION = "1.0.9"
+const VERSION = "1.1.0"
 
 app.get('/',function(req,res){
     
@@ -44,6 +46,23 @@ app.get('/info',function(req,res){
     getBasicInfo(link,res)
 })
 
+app.get('/search',function(req,res){
+
+    //---Parameter question 
+    let linkforReplace1 = req.query.question
+    let linkforReplace2 = linkforReplace1.replace("-","/")
+    let linkBase64 = linkforReplace2.replace("_","+")
+
+    //---Parameter limit
+    let limit = req.query.limit
+
+    let buff = Buffer.from(linkBase64, 'base64')
+    let question = buff.toString('ascii')
+
+    res.type('json')
+    getSearch(question,limit,res)
+
+})
 
 
 console.log("--- audioextractor ---")
@@ -81,6 +100,31 @@ function getBasicInfo(address,res){
                  res.end(JSON.stringify(videoInfo))
         }
     )
+}
+
+function getSearch(question,limit,res){
+
+    ytsr.getFilters(question).then(async filters1 => {
+        filter1 = filters1.get('Type').find(o => o.name === 'Video')
+
+        const options = {
+            limit: limit,
+            nextpageRef: filter1.ref
+          }
+        let promise = ytsr(null,options)
+    
+        promise.then( results =>{
+            res.send(JSON.stringify(results))
+            console.log("Search:"+question+ " Limit:"+limit)
+        }).catch((reason)=>{
+            console.error("Promise error:"+reason)
+        }).finally(()=>{
+            res.end()
+        })
+
+    }).catch ( err =>{
+        console.error(err)
+    })
 }
 
 
