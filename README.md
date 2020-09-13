@@ -126,7 +126,7 @@ With the server running go to thr following route: http://<SERVER_IP>:2000/searc
 
 ## Android App
 
-There is a small free android App that you can use to invoque the audioextractor server.
+There is a free android App that you can use to invoque the audioextractor server.
 
 see:
 https://github.com/Javierenrique00/grabwaves
