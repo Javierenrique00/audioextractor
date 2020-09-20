@@ -16,7 +16,7 @@ const { doesNotThrow } = require('assert')
 const BASE_AUDIO_PATH = "audio"
 const PORT = 2000
 const MAX_HOURS_FILES = 24
-const VERSION = "1.1.0"
+const VERSION = "1.1.1"
 
 app.get('/',function(req,res){
     
@@ -84,15 +84,17 @@ function getBasicInfo(address,res){
                 related.push({id:it.id,
                             title:it.title,
                             author:it.author,
-                            duration:0})
+                            duration:it.length_seconds})
             })
             let videoDetails = result.videoDetails
+            let duracionSeg = parseInt( videoDetails.lengthSeconds)
+            if(isNaN(duracionSeg)) duracionSeg = 0 //--asegurarse que es un numero
             let videoInfo = {title:videoDetails.title,
                  channel:videoDetails.ownerChannelName,
                  thumbnailUrl:videoDetails.thumbnail.thumbnails[0].url,
                  width:videoDetails.thumbnail.thumbnails[0].width,
                  height:videoDetails.thumbnail.thumbnails[0].height,
-                 duration:0,
+                 duration:duracionSeg,
                  related:related
                  }
                  //res.setHeader('Content-Type', 'application/json')
