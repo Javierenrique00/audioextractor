@@ -16,7 +16,7 @@ const { doesNotThrow } = require('assert')
 const BASE_AUDIO_PATH = "audio"
 const PORT = 2000
 const MAX_HOURS_FILES = 24
-const VERSION = "1.1.1"
+const VERSION = "1.2.0"
 
 app.get('/',function(req,res){
     
@@ -29,9 +29,13 @@ app.get('/',function(req,res){
     let link = buff.toString('ascii')
     //---Parameter q   -> Calidad
     let qualityStr = req.query.q
-    let hq = (qualityStr==="hq") 
+    let hq = (qualityStr==="hq")
+    
+    //---get header range
+    let range = req.headers.range
+    console.log("Header_range:"+range)
 
-    convertToAudioFile(link,res,hq)
+    convertToAudioFile(link,res,hq,range)
 })
 
 app.get('/info',function(req,res){
@@ -130,7 +134,7 @@ function getSearch(question,limit,res){
 }
 
 
-function convertToAudioFile(address,res,hq){
+function convertToAudioFile(address,res,hq,range){
 
     createDir(BASE_AUDIO_PATH)
     let hash = createHash(address) + (hq ? "hq" : "lq") + ".mp3"
@@ -158,7 +162,7 @@ function convertToAudioFile(address,res,hq){
             convStream.on('finish', () =>{
                 writeStream.end()
                 console.log('data converted finished:'+ readableBytes( total ))
-                creaServer(fileLocalPath,res)
+                creaServer(fileLocalPath,res,range)
             })
         }catch(err){
             console.error(err.message)
@@ -167,22 +171,44 @@ function convertToAudioFile(address,res,hq){
     }
     else{
         console.log('File already loaded:' + address)
-        creaServer(fileLocalPath,res)
+        creaServer(fileLocalPath,res,range)
     }
 
-    //purgueFiles(BASE_AUDIO_PATH)
 }
 
-function creaServer(fileLocalPath,res){
-  
+function creaServer(fileLocalPath,res,range){
     let stat = fs.statSync(fileLocalPath)
-    res.writeHead(200, {
-        'Content-Type': 'audio/mpeg',
-        'Content-Length': stat.size
-    });
-    fs.createReadStream(fileLocalPath).pipe(res);
+    let total = stat.size
+    if(range){
+        let parts = range.replace(/bytes=/, '').split('-')
+        let partialStart = parts[0]
+        let partialEnd = parts[1]
+
+        let start = parseInt(partialStart,10)
+        let end = partialEnd ? parseInt(partialEnd, 10) : total - 1
+        let chunksize = (end - start) + 1
+        let rstream = fs.createReadStream(fileLocalPath, {start: start, end: end})
+        console.log("Pipe from file:"+fileLocalPath + " Partial, Chunksize:"+chunksize)
+        res.writeHead(206, {
+            'Content-Range': 'bytes ' + start + '-' + end + '/' + total,
+            'Accept-Ranges': 'bytes', 'Content-Length': chunksize,
+            'Content-Type': 'audio/mpeg'
+        })
+        rstream.pipe(res)
+    }else{
+    
+        console.log("Pipe from file:"+fileLocalPath + " Complete, size:"+total)
+        res.set("Accept-Ranges","bytes")
+        res.writeHead(200, {
+            'Content-Type': 'audio/mpeg',
+            'Content-Length': total
+        });
+        fs.createReadStream(fileLocalPath).pipe(res)
+    }
+
     purgueFiles(BASE_AUDIO_PATH,fileLocalPath)
-  }
+
+}
 
 
 //--- https://levelup.gitconnected.com/use-node-js-to-to-create-directories-and-files-734063ce93ec
