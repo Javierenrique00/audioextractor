@@ -16,7 +16,7 @@ const { doesNotThrow } = require('assert')
 const BASE_AUDIO_PATH = "audio"
 const PORT = 2000
 const MAX_HOURS_FILES = 24
-const VERSION = "1.2.0"
+const VERSION = "1.2.1"
 
 app.get('/',function(req,res){
     
@@ -161,9 +161,13 @@ function convertToAudioFile(address,res,hq,range){
 
             convStream.on('finish', () =>{
                 writeStream.end()
-                console.log('data converted finished:'+ readableBytes( total ))
-                creaServer(fileLocalPath,res,range)
+                writeStream.on('finish', ()=>{
+                    console.log('data converted finished:'+ readableBytes( total ))
+                    creaServer(fileLocalPath,res,range)
+                })
             })
+
+
         }catch(err){
             console.error(err.message)
             deleteFile(fileLocalPath,0)
@@ -177,6 +181,11 @@ function convertToAudioFile(address,res,hq,range){
 }
 
 function creaServer(fileLocalPath,res,range){
+    //--- lo pone para no borrarlo mientras se envía
+    let ahora = moment()
+    cache.set(fileLocalPath,ahora)
+
+
     let stat = fs.statSync(fileLocalPath)
     let total = stat.size
     if(range){
