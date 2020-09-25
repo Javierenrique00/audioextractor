@@ -12,11 +12,12 @@ var MapCache = require('map-cache')
 var cache = new MapCache()
 const ytsr = require('ytsr')
 const { doesNotThrow } = require('assert')
+const { stringify } = require('querystring')
 
 const BASE_AUDIO_PATH = "audio"
 const PORT = 2000
 const MAX_HOURS_FILES = 24
-const VERSION = "1.2.2"
+const VERSION = "1.2.3"
 
 app.get('/',function(req,res){
     
@@ -90,7 +91,9 @@ function getBasicInfo(address,res){
                 related.push({id:it.id,
                             title:it.title,
                             author:it.author,
-                            duration:checkDuration})
+                            duration:checkDuration,
+                            iUrl:it.video_thumbnail
+                        })
             })
             let videoDetails = result.videoDetails
             let duracionSeg = parseInt( videoDetails.lengthSeconds)
