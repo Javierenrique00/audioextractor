@@ -16,7 +16,7 @@ const { doesNotThrow } = require('assert')
 const BASE_AUDIO_PATH = "audio"
 const PORT = 2000
 const MAX_HOURS_FILES = 24
-const VERSION = "1.2.1"
+const VERSION = "1.2.2"
 
 app.get('/',function(req,res){
     
@@ -85,10 +85,12 @@ function getBasicInfo(address,res){
             let related = []
             let relacionados = result.related_videos
             relacionados.forEach( it =>{
+                let checkDuration = it.length_seconds
+                if(isNaN(checkDuration)) checkDuration = 0
                 related.push({id:it.id,
                             title:it.title,
                             author:it.author,
-                            duration:it.length_seconds})
+                            duration:checkDuration})
             })
             let videoDetails = result.videoDetails
             let duracionSeg = parseInt( videoDetails.lengthSeconds)
