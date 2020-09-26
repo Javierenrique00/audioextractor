@@ -17,7 +17,7 @@ const { stringify } = require('querystring')
 const BASE_AUDIO_PATH = "audio"
 const PORT = 2000
 const MAX_HOURS_FILES = 24
-const VERSION = "1.2.3"
+const VERSION = "1.2.4"
 
 app.get('/',function(req,res){
     
@@ -125,7 +125,21 @@ function getSearch(question,limit,res){
         let promise = ytsr(null,options)
     
         promise.then( results =>{
-            res.send(JSON.stringify(results))
+
+            let salida = {}
+            salida.query = results.query
+            salida.currentRef = results.currentRef
+            salida.results = results.results
+            salida.nextpageRef = results.nextpageRef
+            salida.items = []
+            let items = results.items
+            items.forEach( item =>{
+                if(item.type=="video") salida.items.push(item)
+            })
+
+            res.send(JSON.stringify(salida))
+
+            //res.send(JSON.stringify(results))
             console.log("Search:"+question+ " Limit:"+limit)
         }).catch((reason)=>{
             console.error("Promise error:"+reason)
