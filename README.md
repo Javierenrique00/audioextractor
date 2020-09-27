@@ -20,7 +20,7 @@ See docker hub: https://hub.docker.com/repository/docker/javierenrique00/audioex
 Prerequisites:
 Docker
 
-    docker run --name myaudioextractor --restart always -p 2000:2000 -d javierenrique00/audioextractor-js:1.2.4
+    docker run --name myaudioextractor --restart always -p 2000:2000 -d javierenrique00/audioextractor-js:1.2.5
 
 
 ## Kubernetes installation
@@ -123,6 +123,50 @@ With the server running go to thr following route: http://<SERVER_IP>:2000/searc
         "nextpageRef": "/results?search_query=cxxxxxxxgIQAQ%253D%253D&page=2"
         }
 
+## GETTING PLAYLIST DATA
+
+To get playlist data go to the following route: http://<SERVER_IP>:2000/pl?link=BASE64ENCODED_PLAYLIST_URL
+
+For example:  http://XX.XX.XX.XX:2000/pl?link=aHR0cHM6Ly93d3cueW91dHViZS5jb20vcGxheWxpc3Q/bGlzdD1QTDJKdHZ5a3JpZVV5S2ZFc0lMT20xS0wwMlRaeVVCVGRI
+
+The response is:
+
+        {
+        "id": "PL2JtvykrieUyKfEsILOm1KL02TZyUBTdH",
+        "url": "https://www.youtube.com/playlist?list=PL2JtvykrieUyKfEsILOm1KL02TZyUBTdH",
+        "title": "ADELE - 19",
+        "total_items": 4,
+        "items": [
+            {
+            "url": "https://www.youtube.com/watch?v=08DjMT-qR9g",
+            "title": "Adele - Chasing Pavements",
+            "thumbnail": "https://i.ytimg.com/vi/08DjMT-qR9g/hqdefault.jpg",
+            "duration": 221,
+            "author": "Adele"
+            },
+            {
+            "url": "https://www.youtube.com/watch?v=BW9Fzwuf43c",
+            "title": "Adele - Hometown Glory",
+            "thumbnail": "https://i.ytimg.com/vi/BW9Fzwuf43c/hqdefault.jpg",
+            "duration": 216,
+            "author": "Adele"
+            },
+            {
+            "url": "https://www.youtube.com/watch?v=0put0_a--Ng",
+            "title": "ADELE - 'Make You Feel My Love'",
+            "thumbnail": "https://i.ytimg.com/vi/0put0_a--Ng/hqdefault.jpg",
+            "duration": 247,
+            "author": "XL Recordings"
+            },
+            {
+            "url": "https://www.youtube.com/watch?v=uGwH-x4VoH8",
+            "title": "ADELE - 'Cold Shoulder'",
+            "thumbnail": "https://i.ytimg.com/vi/uGwH-x4VoH8/hqdefault.jpg",
+            "duration": 192,
+            "author": "XL Recordings"
+            }
+        ]
+        }
 
 ## Android App
 

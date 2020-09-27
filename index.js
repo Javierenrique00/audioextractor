@@ -13,11 +13,13 @@ var cache = new MapCache()
 const ytsr = require('ytsr')
 const { doesNotThrow } = require('assert')
 const { stringify } = require('querystring')
+const ytpl = require('ytpl')
+
 
 const BASE_AUDIO_PATH = "audio"
 const PORT = 2000
 const MAX_HOURS_FILES = 24
-const VERSION = "1.2.4"
+const VERSION = "1.2.5"
 
 app.get('/',function(req,res){
     
@@ -66,6 +68,20 @@ app.get('/search',function(req,res){
 
     res.type('json')
     getSearch(question,limit,res)
+
+})
+
+app.get('/pl',function(req,res){
+//---Parameter list
+let listLinkUrlEncoded = req.query.link
+let linkforReplace2 = listLinkUrlEncoded.replace("-","/")
+let linkBase64 = linkforReplace2.replace("_","+")
+
+let buff = Buffer.from(linkBase64, 'base64')
+let link = buff.toString('ascii')
+
+res.type('JSON')
+getPlayList(link,res)
 
 })
 
@@ -152,6 +168,36 @@ function getSearch(question,limit,res){
     })
 }
 
+function getPlayList(link,res){
+    console.log("Finding Playlist:"+link)
+    ytpl(link).then( playlist => {
+        let salida = {}
+        salida.id = playlist.id
+        salida.url = playlist.url
+        salida.title = playlist.title
+        salida.total_items = playlist.total_items
+        salida.items = []
+        playlist.items.forEach( item =>{
+             salida.items.push({url : item.url_simple,title:item.title,thumbnail:item.thumbnail,duration:convertTimeStrtoSeconds(item.duration),author:item.author.name})
+        })
+        res.end(JSON.stringify(salida))
+    }).catch( err => {
+        console.error("Error playlist:"+err)
+    })
+
+}
+
+function convertTimeStrtoSeconds(timeStr){
+    let fragments = timeStr.split(':')
+    let s = 0
+    let m = 1
+    while (fragments.length > 0) {
+        s += m * parseInt(fragments.pop(), 10)
+        m *= 60
+    }
+    if(isNaN(s)) s =0
+    return s
+}
 
 function convertToAudioFile(address,res,hq,range){
 
