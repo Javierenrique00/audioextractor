@@ -19,7 +19,7 @@ const ytpl = require('ytpl')
 const BASE_AUDIO_PATH = "audio"
 const PORT = 2000
 const MAX_HOURS_FILES = 24
-const VERSION = "1.2.5"
+const VERSION = "1.2.6"
 
 app.get('/',function(req,res){
     
@@ -175,14 +175,17 @@ function getPlayList(link,res){
         salida.id = playlist.id
         salida.url = playlist.url
         salida.title = playlist.title
-        salida.total_items = playlist.total_items
         salida.items = []
         playlist.items.forEach( item =>{
              salida.items.push({url : item.url_simple,title:item.title,thumbnail:item.thumbnail,duration:convertTimeStrtoSeconds(item.duration),author:item.author.name})
         })
+        salida.total_items = playlist.items.length
+        salida.error = false
         res.end(JSON.stringify(salida))
     }).catch( err => {
         console.error("Error playlist:"+err)
+        let error = {error:true,items:[],total_items:0}
+        res.end(JSON.stringify(error))
     })
 
 }
