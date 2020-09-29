@@ -1,6 +1,6 @@
 # audioextractor
 
-AudioExtractor is an experiment/exercise to use node-ytdl-core library to have a microservice for audio extraction from video streams.
+AudioExtractor is a server that uses [node-ytdl-core](https://github.com/fent/node-ytdl-core) for playing videos in only audio mode, [node-ytsr](https://github.com/fent/node-ytdl-core) for youtube searchs and [node-ytpl](https://github.com/TimeForANinja/node-ytpl) for youtube playlist. The objetive is to have a microservice for audio extraction from video streams. It has a functional and usefull Android client called [Grabwaves](https://github.com/Javierenrique00/grabwaves).
 
 Ready to be deployed locally, in docker containers or a Kubernetes cluster.
 
