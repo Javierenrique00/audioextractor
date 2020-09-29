@@ -19,7 +19,7 @@ const ytpl = require('ytpl')
 const BASE_AUDIO_PATH = "audio"
 const PORT = 2000
 const MAX_HOURS_FILES = 24
-const VERSION = "1.2.6"
+const VERSION = "1.2.7"
 
 app.get('/',function(req,res){
     
@@ -170,14 +170,14 @@ function getSearch(question,limit,res){
 
 function getPlayList(link,res){
     console.log("Finding Playlist:"+link)
-    ytpl(link).then( playlist => {
+    ytpl(link,{limit:Infinity}).then( playlist => {
         let salida = {}
         salida.id = playlist.id
         salida.url = playlist.url
         salida.title = playlist.title
         salida.items = []
-        playlist.items.forEach( item =>{
-             salida.items.push({url : item.url_simple,title:item.title,thumbnail:item.thumbnail,duration:convertTimeStrtoSeconds(item.duration),author:item.author.name})
+        playlist.items.forEach( item =>{  
+             salida.items.push({url : item.url_simple,title:item.title,thumbnail:item.thumbnail,duration:convertTimeStrtoSeconds(item.duration),author:getAuthor(item)})
         })
         salida.total_items = playlist.items.length
         salida.error = false
@@ -190,16 +190,31 @@ function getPlayList(link,res){
 
 }
 
-function convertTimeStrtoSeconds(timeStr){
-    let fragments = timeStr.split(':')
-    let s = 0
-    let m = 1
-    while (fragments.length > 0) {
-        s += m * parseInt(fragments.pop(), 10)
-        m *= 60
+function getAuthor(item){
+    try{
+        return item.author.name
     }
-    if(isNaN(s)) s =0
-    return s
+    catch(err){
+        return ""
+    }
+}
+
+function convertTimeStrtoSeconds(timeStr){
+    try{
+        let fragments = timeStr.split(':')
+        let s = 0
+        let m = 1
+        while (fragments.length > 0) {
+            s += m * parseInt(fragments.pop(), 10)
+            m *= 60
+        }
+        if(isNaN(s)) s =0
+        return s
+
+    }catch(err){
+        return 0
+    }
+
 }
 
 function convertToAudioFile(address,res,hq,range){
