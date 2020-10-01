@@ -19,7 +19,7 @@ const ytpl = require('ytpl')
 const BASE_AUDIO_PATH = "audio"
 const PORT = 2000
 const MAX_HOURS_FILES = 24
-const VERSION = "1.2.7"
+const VERSION = "1.2.8"
 
 app.get('/',function(req,res){
     
@@ -83,6 +83,10 @@ let link = buff.toString('ascii')
 res.type('JSON')
 getPlayList(link,res)
 
+})
+
+app.get('/check',function(reg,res){
+    res.send("ok")
 })
 
 
