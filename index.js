@@ -10,16 +10,19 @@ var moment = require('moment')
 const { get } = require('http')
 var MapCache = require('map-cache')
 var cache = new MapCache()
+var convCache = new MapCache()
 const ytsr = require('ytsr')
 const { doesNotThrow } = require('assert')
 const { stringify } = require('querystring')
 const ytpl = require('ytpl')
+var ffmpeg = require('ffmpeg-static')
+const cp = require('child_process')
 
 
 const BASE_AUDIO_PATH = "audio"
 const PORT = 2000
 const MAX_HOURS_FILES = 24
-const VERSION = "1.2.8"
+const VERSION = "1.2.9"
 
 app.get('/',function(req,res){
     
@@ -32,13 +35,17 @@ app.get('/',function(req,res){
     let link = buff.toString('ascii')
     //---Parameter q   -> Calidad
     let qualityStr = req.query.q
-    let hq = (qualityStr==="hq")
+    let hq = (qualityStr==="hq")  //--- por defecto es lq
     
+    //---Parameter tran -> Transcoding
+    let transStr = req.query.tran
+    let tran = (transStr==="true") //--- por defecto es false
+
     //---get header range
     let range = req.headers.range
     console.log("Header_range:"+range)
 
-    convertToAudioFile(link,res,hq,range)
+    convertToAudioFile(link,res,hq,range,tran)
 })
 
 app.get('/info',function(req,res){
@@ -86,7 +93,12 @@ getPlayList(link,res)
 })
 
 app.get('/check',function(reg,res){
-    res.send("ok")
+    res.end("ok")
+})
+
+app.get('/converted',function(reg,res){
+    res.type('json')
+    serverTrans(res)
 })
 
 
@@ -221,51 +233,187 @@ function convertTimeStrtoSeconds(timeStr){
 
 }
 
-function convertToAudioFile(address,res,hq,range){
+function serverTrans(res){
 
+    let completeList = []
+    let convList = []   
+    //--- debe hacer el listado
+    fs.readdir(BASE_AUDIO_PATH,(err, files) => {
+        if(!err){
+
+            files.forEach( file =>{
+                if(file.endsWith("q.opus")) {
+                    if(!convCache.has(file)){
+                        //--- ya hizo la conversión
+                        completeList.push(file)
+                    }
+                }
+            })
+
+            //--- mira los que es
+            let cacheTemp = Object.keys(convCache.__data__)
+            cacheTemp.forEach( key =>{
+                convList.push({file:key,msconverted:convCache.get(key)})
+            })
+
+            //--- Transmite los que ha convertido
+            res.end(JSON.stringify({complete:completeList,conversion:convList}))
+
+        }else{
+            //--- transmitevacio
+            res.end(JSON.stringify({complete:[],conversion:[]}))
+        }
+    })
+
+}
+
+function convertToAudioFile(address,res,hq,range,tran){
     createDir(BASE_AUDIO_PATH)
-    let hash = createHash(address) + (hq ? "hq" : "lq") + ".mp3"
+    let hash = createHash(address) + (hq ? "hq" : "lq") + ".opus"
     let fileLocalPath = BASE_AUDIO_PATH + path.sep + hash
 
-    if(!fs.existsSync(fileLocalPath)){
+    console.log("Has file:"+fs.existsSync(fileLocalPath)+" has conversion:"+ convCache.has(hash))
+
+
+    if(!fs.existsSync(fileLocalPath) && !convCache.has(hash)){
+        convCache.set(hash,0)
+
         let total = 0
         let calidad = 'lowestaudio'
-        if(hq) calidad = 'highestaudio'
+        let bitRate = '32k'
+        let canales = '1'
+        if(hq) {
+            calidad = 'highestaudio'
+            bitRate = '256k'
+            canales = '2'
+        }
         console.log('Asking for video:' + address)
         try {
-            let convStream = ytdl(address,{ filter: 'audioonly' , quality: calidad})
+            let audioStream = ytdl(address,{ filter: 'audioonly' , quality: calidad})
 
-            let writeStream = fs.createWriteStream(fileLocalPath)
-
-            convStream.on('data', (data) => {
-                if(total==0) {
-                    writeStream = fs.createWriteStream(fileLocalPath)
-                }
-
-                writeStream.write(data)
-                total = total + data.length
-            })
-
-            convStream.on('finish', () =>{
-                writeStream.end()
-                writeStream.on('finish', ()=>{
-                    console.log('data converted finished:'+ readableBytes( total ))
-                    creaServer(fileLocalPath,res,range)
+            if(tran){
+                let convProcess = cp.spawn(ffmpeg, [
+                    // Remove ffmpeg's console spamming
+                    '-loglevel', '0', '-hide_banner',
+                    // Redirect/enable progress messages
+                    '-progress', 'pipe:3',
+                    // Audio pipe es el 4
+                    '-i', 'pipe:4',
+                    // Choose some fancy codes  '-c:a','aac','-b:a','64k',      //--- aac
+                    // Choose some fancy codes  '-c:a','copy',                  //--- solo copia
+                    // Choose some fancy codes  '-c:a','libopus','-b:a','8k',  //--- con opus
+                    '-c:a','libopus','-b:a',bitRate,'-ac',canales,                        
+                    // Define output container es el pipe5
+                    '-f', 'ogg', 'pipe:5',
+                ], {
+                    windowsHide: true,
+                    stdio: [
+                    /* Standard: stdin, stdout, stderr */
+                    'inherit', 'inherit', 'inherit',
+                    /* Custom: pipe:3, pipe:4, pipe:5 */
+                    'pipe', 'pipe', 'pipe',
+                    ],
                 })
-            })
 
+                convProcess.on('close',()=>{
+                    //--- checkea que se haya creado el archivo
+
+                    waitFileExists(fileLocalPath,200,function(){
+
+                        convCache.del(hash)
+                        let stat = fs.statSync(fileLocalPath)
+                        let partialSize = stat.size
+                        if(partialSize>100){
+                            console.log("Conversion finish ->"+readableBytes(partialSize))
+                            creaServer(fileLocalPath,res,range)
+                        }else{
+                            console.error("Conversion with error not specified")
+                            delFile(fileLocalPath)
+                        }
+
+                    })
+
+                })
+                convProcess.stdio[3].on('data', chunk => {
+                    //console.log("Avance conversion:"+chunk)
+                    let lines = chunk.toString().trim().split('\n');
+                    let args = {};
+                    for (const l of lines) {
+                      let [key, value] = l.trim().split('=');
+                      args[key] = value;
+                    }
+                    convCache.set(hash,args["out_time_ms"])
+
+                })
+                audioStream.pipe(convProcess.stdio[4])
+                convProcess.stdio[5].pipe(fs.createWriteStream(fileLocalPath))
+
+            }else{
+                let writeStream = fs.createWriteStream(fileLocalPath)
+
+                audioStream.on('data', (data) => {
+                    if(total==0) {
+                        writeStream = fs.createWriteStream(fileLocalPath)
+                    }
+    
+                    writeStream.write(data)
+                    total = total + data.length
+                })
+    
+                audioStream.on('finish', () =>{
+                    writeStream.end()
+                    writeStream.on('finish', ()=>{
+                        console.log('data converted finished:'+ readableBytes( total ))
+                        convCache.del(hash)
+                        creaServer(fileLocalPath,res,range)
+                    })
+                })
+            }
 
         }catch(err){
             console.error(err.message)
-            deleteFile(fileLocalPath,0)
+            delFile(fileLocalPath)
+            convCache.del(hash)
         }
     }
     else{
-        console.log('File already loaded:' + address)
-        creaServer(fileLocalPath,res,range)
+
+        if(!convCache.has(hash)){
+            console.log('File already loaded:' + address)
+            creaServer(fileLocalPath,res,range)
+        }
+        else{
+            console.log('Conversion in process, please wait' + address)
+            requestInProcess(fileLocalPath,res)
+        }
     }
 
 }
+
+function requestInProcess(fileLocalPath,res){
+    res.writeHead(100, {
+        'Content-Type': 'audio/mpeg'
+    })
+    res.end("Processing "+fileLocalPath)
+}
+
+//--check interval en ms
+function waitFileExists(path, periodCheck,executefile) {
+    let timeout = setInterval(function() {
+
+        let file = path;
+        let fileExists = fs.existsSync(file);
+
+        console.log('Checking for: ', file);
+        console.log('Exists: ', fileExists);
+
+        if (fileExists) {
+            clearInterval(timeout);
+            executefile()
+        }
+    }, periodCheck);
+};
+
 
 function creaServer(fileLocalPath,res,range){
     //--- lo pone para no borrarlo mientras se envía
@@ -276,24 +424,31 @@ function creaServer(fileLocalPath,res,range){
     let stat = fs.statSync(fileLocalPath)
     let total = stat.size
     if(range){
-        let parts = range.replace(/bytes=/, '').split('-')
-        let partialStart = parts[0]
-        let partialEnd = parts[1]
+        try{
+            let parts = range.replace(/bytes=/, '').split('-')
+            let partialStart = parts[0]
+            let partialEnd = parts[1]
 
-        let start = parseInt(partialStart,10)
-        let end = partialEnd ? parseInt(partialEnd, 10) : total - 1
-        let chunksize = (end - start) + 1
-        let rstream = fs.createReadStream(fileLocalPath, {start: start, end: end})
-        console.log("Pipe from file:"+fileLocalPath + " Partial, Chunksize:"+chunksize)
-        res.writeHead(206, {
-            'Content-Range': 'bytes ' + start + '-' + end + '/' + total,
-            'Accept-Ranges': 'bytes', 'Content-Length': chunksize,
-            'Content-Type': 'audio/mpeg'
-        })
-        rstream.pipe(res)
+            let start = parseInt(partialStart,10)
+            let end = partialEnd ? parseInt(partialEnd, 10) : total - 1
+            let chunksize = (end - start) + 1
+            
+            let rstream = fs.createReadStream(fileLocalPath, {start: start, end: end})
+            console.log("Pipe from file:"+fileLocalPath + " Partial Download init Byte:"+readableBytes(start)+ " Chunksize:"+readableBytes( chunksize))
+            res.writeHead(206, {
+                'Content-Range': 'bytes ' + start + '-' + end + '/' + total,
+                'Accept-Ranges': 'bytes', 'Content-Length': chunksize,
+                'Content-Type': 'audio/mpeg'
+            })
+            rstream.pipe(res)
+            
+        }catch(err){
+            console.error("ERROR partial message:"+err.message)
+        }
+        
     }else{
     
-        console.log("Pipe from file:"+fileLocalPath + " Complete, size:"+total)
+        console.log("Pipe from file:"+fileLocalPath + " Complete, size:"+ readableBytes(total))
         res.set("Accept-Ranges","bytes")
         res.writeHead(200, {
             'Content-Type': 'audio/mpeg',
@@ -337,7 +492,7 @@ function purgueFiles(directory,nodelete){
     let ahora = moment()
     cache.set(nodelete,ahora)
 
-    console.log("purging directory:"+directory)
+    //console.log("purging directory:"+directory)
     fs.readdir(directory,(err, files) => {
         if(!err){
             files.forEach( file => {
@@ -380,6 +535,14 @@ function deleteFile(path,durTime){
             console.log("Deleted file:" + path + " Duration (Hours):" + durTime.as('hours'))
             //--- trata de sacarlo del cache
             cache.del(path)
+        }
+    })
+}
+
+function delFile(path){
+    fs.unlink(path, (err) => {
+        if(!err){
+            console.log("Deleted file:" + path)
         }
     })
 }

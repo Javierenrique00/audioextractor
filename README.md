@@ -2,6 +2,8 @@
 
 AudioExtractor is a server that uses [node-ytdl-core](https://github.com/fent/node-ytdl-core) for playing videos in only audio mode, [node-ytsr](https://github.com/fent/node-ytdl-core) for youtube searchs and [node-ytpl](https://github.com/TimeForANinja/node-ytpl) for youtube playlist. The objetive is to have a microservice for audio extraction from video streams. It has a functional and usefull Android client called [Grabwaves](https://github.com/Javierenrique00/grabwaves).
 
+Audioextractor can force transcoding of audio with the ffmpeg library using [ffmpeg-static](https://github.com/eugeneware/ffmpeg-static)
+
 Ready to be deployed locally, in docker containers or a Kubernetes cluster.
 
 ## Local installation.
@@ -20,7 +22,7 @@ See docker hub: https://hub.docker.com/repository/docker/javierenrique00/audioex
 Prerequisites:
 Docker
 
-    docker run --name myaudioextractor --restart always -p 2000:2000 -d javierenrique00/audioextractor-js:1.2.8
+    docker run --name myaudioextractor --restart always -p 2000:2000 -d javierenrique00/audioextractor-js:1.2.9
 
 
 ## Kubernetes installation
@@ -33,14 +35,23 @@ Kubernetes cluster with kubectl commnand
 ## EXTRACTING AUDIO
 
 1- Install audioextractor server.
-2- In the browser type: http://<SERVER_IP>:2000/?link=BASE64ENCODED_VIDEO_URL_PATH***&q=QUALITY
+2- In the browser type: http://<SERVER_IP>:2000/?link=BASE64ENCODED_VIDEO_URL_PATH***&q=QUALITY&tran=BOOLEAN
 
 __***Important Encoded64 is replacing the / and + characteres for - and _ characters because / character can mixed with a url path.__
         
-        Example: http://192.168.0.68:2000/?link=aHR0cHM6Ly93d3cueW91dHViZS5jb20vd2F0Y2g-dj1SZFNyc09salZtbw==&q=lq
+        Example: http://192.168.0.68:2000/?link=aHR0cHM6Ly93d3cueW91dHViZS5jb20vd2F0Y2g-dj1SZFNyc09salZtbw==&q=lq&tran=false
+
+
         where Base64("https://www.youtube.com/watch?v=RdSrsOljVmo") = aHR0cHM6Ly93d3cueW91dHViZS5jb20vd2F0Y2g-dj1SZFNyc09salZtbw==
         
-        QUALITY could be [lq,hq] to low quality and hq for high quality
+        - q -> QUALITY could be [lq,hq] to low quality and hq for high quality (default lq)
+        - tran -> TRANSCODE could be [true,false] for transcoding in the server. (Deafult false)
+
+**Notes about transcoding:**
+The obtained files without transcoding have better audio quality because comes from the origin without any manipulation, and also are available in the server faster because do not require local processing, but sometimes these files are not syncronic and you can not make partial downloads with the client (Grabwaves)
+
+With transcoding, the files obtained are with some audio quality loss because are changed from the original format, takes more time in the server to be ready but are more compatible in some clients like Grabwaves.
+
 
 3- The browser shows a player with the audio.
 
@@ -167,6 +178,42 @@ The response is:
             }
         ]
         }
+
+
+## GETTING CONVERTED AUDIOFILES AND IN CONVERSION STATUS
+
+To get the status of the conversions avalaible in the servers: http://<SERVER_IP>:2000/converted
+
+The response is a JSON with:
+
+        {
+        "complete": [
+            "06298aad9d02fff5244d12c366120ca2lq.opus",
+            "402540b7942d6fae04ac40dbddad9a8fhq.opus",
+            "402540b7942d6fae04ac40dbddad9a8flq.opus",
+            "f3c93bb7d05a7f86e95a8c9cdd3c23b5lq.opus",
+            "f8f890052849dcf95cbe1cb12e40c96alq.opus"
+        ],
+        "conversion": [{
+            file:"06298aad9d02fff5244d12c366120ca2lq.opus",
+            msconverted: 343556
+            }]
+        }
+
+
+The file in the server has the following format:
+
+        XXXXXXXXXXXXXQQ.opus
+
+Where:
+
+XXXXXXXXXXXXX is the MD5 hash in HEX of the url of the audio.
+
+QQ -> can be "lq" or "hq" is the quality, low quality or hight quality of the audio available.
+
+and all the files are encoded in .opus format.
+
+Note: Files get purged 24 hours after the creation by default, you can change in the server file index.js in the contant: MAX_HOURS_FILES
 
 ## Android App
 
