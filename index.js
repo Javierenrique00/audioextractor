@@ -22,7 +22,7 @@ const cp = require('child_process')
 const BASE_AUDIO_PATH = "audio"
 const PORT = 2000
 const MAX_HOURS_FILES = 24
-const VERSION = "1.2.9"
+const VERSION = "1.3.0"
 
 app.get('/',function(req,res){
     
@@ -97,8 +97,12 @@ app.get('/check',function(reg,res){
 })
 
 app.get('/converted',function(reg,res){
+
+    //---Parameter file -> Parametro opcional
+    let file = reg.query.file
+
     res.type('json')
-    serverTrans(res)
+    serverTrans(res,file)
 })
 
 
@@ -233,7 +237,7 @@ function convertTimeStrtoSeconds(timeStr){
 
 }
 
-function serverTrans(res){
+function serverTrans(res,filtroFile){
 
     let completeList = []
     let convList = []   
@@ -242,10 +246,12 @@ function serverTrans(res){
         if(!err){
 
             files.forEach( file =>{
-                if(file.endsWith("q.opus")) {
+                if(file.endsWith(".opus")) {
                     if(!convCache.has(file)){
                         //--- ya hizo la conversión
-                        completeList.push(file)
+                        if(filtroFile==undefined || filtroFile===file){
+                            completeList.push(file)
+                        }
                     }
                 }
             })
@@ -269,7 +275,7 @@ function serverTrans(res){
 
 function convertToAudioFile(address,res,hq,range,tran){
     createDir(BASE_AUDIO_PATH)
-    let hash = createHash(address) + (hq ? "hq" : "lq") + ".opus"
+    let hash = createHash(address) + (hq ? "hq" : "lq") + (tran ? "t" : "f") +".opus"
     let fileLocalPath = BASE_AUDIO_PATH + path.sep + hash
 
     console.log("Has file:"+fs.existsSync(fileLocalPath)+" has conversion:"+ convCache.has(hash))

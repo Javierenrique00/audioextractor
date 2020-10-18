@@ -22,7 +22,7 @@ See docker hub: https://hub.docker.com/repository/docker/javierenrique00/audioex
 Prerequisites:
 Docker
 
-    docker run --name myaudioextractor --restart always -p 2000:2000 -d javierenrique00/audioextractor-js:1.2.9
+    docker run --name myaudioextractor --restart always -p 2000:2000 -d javierenrique00/audioextractor-js:1.3.0
 
 
 ## Kubernetes installation
@@ -45,7 +45,7 @@ __***Important Encoded64 is replacing the / and + characteres for - and _ charac
         where Base64("https://www.youtube.com/watch?v=RdSrsOljVmo") = aHR0cHM6Ly93d3cueW91dHViZS5jb20vd2F0Y2g-dj1SZFNyc09salZtbw==
         
         - q -> QUALITY could be [lq,hq] to low quality and hq for high quality (default lq)
-        - tran -> TRANSCODE could be [true,false] for transcoding in the server. (Deafult false)
+        - tran -> TRANSCODE could be [true,false] for transcoding in the server. (default false)
 
 **Notes about transcoding:**
 The obtained files without transcoding have better audio quality because comes from the origin without any manipulation, and also are available in the server faster because do not require local processing, but sometimes these files are not syncronic and you can not make partial downloads with the client (Grabwaves)
@@ -182,28 +182,30 @@ The response is:
 
 ## GETTING CONVERTED AUDIOFILES AND IN CONVERSION STATUS
 
-To get the status of the conversions avalaible in the servers: http://<SERVER_IP>:2000/converted
+To get the status of the conversions avalaible in the servers: http://<SERVER_IP>:2000/converted?file=FILEPARAMETER
+
+Because the list of files could be large, the list can be filtered with the optional paramer file.
 
 The response is a JSON with:
 
         {
         "complete": [
-            "06298aad9d02fff5244d12c366120ca2lq.opus",
-            "402540b7942d6fae04ac40dbddad9a8fhq.opus",
-            "402540b7942d6fae04ac40dbddad9a8flq.opus",
-            "f3c93bb7d05a7f86e95a8c9cdd3c23b5lq.opus",
-            "f8f890052849dcf95cbe1cb12e40c96alq.opus"
+            "06298aad9d02fff5244d12c366120ca2lqt.opus",
+            "402540b7942d6fae04ac40dbddad9a8fhqt.opus",
+            "402540b7942d6fae04ac40dbddad9a8flqt.opus",
+            "f3c93bb7d05a7f86e95a8c9cdd3c23b5lqf.opus",
+            "f8f890052849dcf95cbe1cb12e40c96alqf.opus"
         ],
         "conversion": [{
-            file:"06298aad9d02fff5244d12c366120ca2lq.opus",
-            msconverted: 343556
+            file:"06298aad9d02fff5244d12c366120ca2lqt.opus", (key)
+            msconverted: 13320500  (hash)
             }]
         }
 
 
 The file in the server has the following format:
 
-        XXXXXXXXXXXXXQQ.opus
+        XXXXXXXXXXXXXQQT.opus
 
 Where:
 
@@ -211,13 +213,18 @@ XXXXXXXXXXXXX is the MD5 hash in HEX of the url of the audio.
 
 QQ -> can be "lq" or "hq" is the quality, low quality or hight quality of the audio available.
 
+T -> Is transcoding active, could be "t"-> true or "f"-> false
+
+**Parameter fiile**
+Filter the list of complete files, but does not filter the list of conversion files. It´s useful for look for changes in the state of conversion advance wihout waste bandwith.
+
 and all the files are encoded in .opus format.
 
 Note: Files get purged 24 hours after the creation by default, you can change in the server file index.js in the contant: MAX_HOURS_FILES
 
 ## Android App
 
-There is a free android App that you can use to invoque the audioextractor server.
+There is a free android App that you can use to use all the features of audioextractor server. You can play a playlist from youtube with only the link.
 
 see:
 https://github.com/Javierenrique00/grabwaves
