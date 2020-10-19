@@ -22,7 +22,7 @@ const cp = require('child_process')
 const BASE_AUDIO_PATH = "audio"
 const PORT = 2000
 const MAX_HOURS_FILES = 24
-const VERSION = "1.3.1"
+const VERSION = "1.3.3"
 
 app.get('/',function(req,res){
     
@@ -396,14 +396,28 @@ function convertToAudioFile(address,res,hq,range,tran,pre){
                         
                     })
                 })
+
+                audioStream.on('error',err =>{
+                    convCache.del(hash)
+                    console.error(err.message)
+                    delFile(fileLocalPath)
+                    if(!pre){
+                        serverError(res,err)
+                    }else{
+                        preloadResMsg(res,"error")
+                    }
+                })
             }
 
         }catch(err){
+            convCache.del(hash)
             console.error(err.message)
             delFile(fileLocalPath)
-            convCache.del(hash)
-            //--todo pre poner de error
-            preloadResMsg(res,"error")
+            if(!pre){
+                serverError(res,err)
+            }else{
+                preloadResMsg(res,"error")
+            }
         }
     }
     else{
@@ -441,6 +455,11 @@ function requestInProcess(fileLocalPath,res){
         'Content-Type': 'audio/mpeg'
     })
     res.end("Processing "+fileLocalPath)
+}
+
+function serverError(res,msgError){
+    res.writeHead(500)
+    res.end(msgError)
 }
 
 //--check interval en ms
