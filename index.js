@@ -22,7 +22,7 @@ const cp = require('child_process')
 const BASE_AUDIO_PATH = "audio"
 const PORT = 2000
 const MAX_HOURS_FILES = 24
-const VERSION = "1.3.0"
+const VERSION = "1.3.1"
 
 app.get('/',function(req,res){
     
@@ -41,11 +41,15 @@ app.get('/',function(req,res){
     let transStr = req.query.tran
     let tran = (transStr==="true") //--- por defecto es false
 
+    //---Parameter pre -> preload
+    let preStr = req.query.pre
+    let pre = (preStr==="true") //--- por defecto es false
+    
     //---get header range
     let range = req.headers.range
     console.log("Header_range:"+range)
 
-    convertToAudioFile(link,res,hq,range,tran)
+    convertToAudioFile(link,res,hq,range,tran,pre)
 })
 
 app.get('/info',function(req,res){
@@ -104,6 +108,7 @@ app.get('/converted',function(reg,res){
     res.type('json')
     serverTrans(res,file)
 })
+
 
 
 console.log("--- audioextractor ---")
@@ -259,7 +264,9 @@ function serverTrans(res,filtroFile){
             //--- mira los que es
             let cacheTemp = Object.keys(convCache.__data__)
             cacheTemp.forEach( key =>{
-                convList.push({file:key,msconverted:convCache.get(key)})
+                if(filtroFile==undefined || filtroFile===key){
+                    convList.push({file:key,msconverted:convCache.get(key)})
+                }
             })
 
             //--- Transmite los que ha convertido
@@ -273,7 +280,7 @@ function serverTrans(res,filtroFile){
 
 }
 
-function convertToAudioFile(address,res,hq,range,tran){
+function convertToAudioFile(address,res,hq,range,tran,pre){
     createDir(BASE_AUDIO_PATH)
     let hash = createHash(address) + (hq ? "hq" : "lq") + (tran ? "t" : "f") +".opus"
     let fileLocalPath = BASE_AUDIO_PATH + path.sep + hash
@@ -331,10 +338,19 @@ function convertToAudioFile(address,res,hq,range,tran){
                         let partialSize = stat.size
                         if(partialSize>100){
                             console.log("Conversion finish ->"+readableBytes(partialSize))
-                            creaServer(fileLocalPath,res,range)
+                            if(!pre){
+                                creaServer(fileLocalPath,res,range)
+                            }else{
+                                //--todo pre poner mensaje de confirmacion de archivo creado
+                                preloadResMsg(res,"ready")
+                            }
+                            
                         }else{
                             console.error("Conversion with error not specified")
                             delFile(fileLocalPath)
+                            //--todo pre poner de error
+                            convCache.del(hash)
+                            preloadResMsg(res,"error")
                         }
 
                     })
@@ -371,7 +387,13 @@ function convertToAudioFile(address,res,hq,range,tran){
                     writeStream.on('finish', ()=>{
                         console.log('data converted finished:'+ readableBytes( total ))
                         convCache.del(hash)
-                        creaServer(fileLocalPath,res,range)
+                        if(!pre){
+                            creaServer(fileLocalPath,res,range)
+                        }else{
+                            //--todo pre poner mensaje de confirmacion de archivo creado
+                            preloadResMsg(res,"ready")
+                        }
+                        
                     })
                 })
             }
@@ -380,21 +402,39 @@ function convertToAudioFile(address,res,hq,range,tran){
             console.error(err.message)
             delFile(fileLocalPath)
             convCache.del(hash)
+            //--todo pre poner de error
+            preloadResMsg(res,"error")
         }
     }
     else{
 
         if(!convCache.has(hash)){
             console.log('File already loaded:' + address)
-            creaServer(fileLocalPath,res,range)
+            if(!pre){
+                creaServer(fileLocalPath,res,range)
+            }else{
+                //--- todo pre, pone mensaje de archivo listo
+                preloadResMsg(res,"ready")
+            }
+            
         }
         else{
             console.log('Conversion in process, please wait' + address)
-            requestInProcess(fileLocalPath,res)
+            if(!pre){
+                requestInProcess(fileLocalPath,res)
+            }else{
+                //--- todo pre, pone mensaje de archivo in conversion in process
+                preloadResMsg(res,"inprocess")
+            }
+            
         }
     }
-
 }
+
+function preloadResMsg(res,resp){
+    res.end(resp)
+}
+
 
 function requestInProcess(fileLocalPath,res){
     res.writeHead(100, {

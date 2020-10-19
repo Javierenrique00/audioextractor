@@ -22,7 +22,7 @@ See docker hub: https://hub.docker.com/repository/docker/javierenrique00/audioex
 Prerequisites:
 Docker
 
-    docker run --name myaudioextractor --restart always -p 2000:2000 -d javierenrique00/audioextractor-js:1.3.0
+    docker run --name myaudioextractor --restart always -p 2000:2000 -d javierenrique00/audioextractor-js:1.3.1
 
 
 ## Kubernetes installation
@@ -35,7 +35,7 @@ Kubernetes cluster with kubectl commnand
 ## EXTRACTING AUDIO
 
 1- Install audioextractor server.
-2- In the browser type: http://<SERVER_IP>:2000/?link=BASE64ENCODED_VIDEO_URL_PATH***&q=QUALITY&tran=BOOLEAN
+2- In the browser type: http://<SERVER_IP>:2000/?link=BASE64ENCODED_VIDEO_URL_PATH***&q=QUALITY&tran=BOOLEAN&PRE=BOOLEAN
 
 __***Important Encoded64 is replacing the / and + characteres for - and _ characters because / character can mixed with a url path.__
         
@@ -44,8 +44,9 @@ __***Important Encoded64 is replacing the / and + characteres for - and _ charac
 
         where Base64("https://www.youtube.com/watch?v=RdSrsOljVmo") = aHR0cHM6Ly93d3cueW91dHViZS5jb20vd2F0Y2g-dj1SZFNyc09salZtbw==
         
-        - q -> QUALITY could be [lq,hq] to low quality and hq for high quality (default lq)
-        - tran -> TRANSCODE could be [true,false] for transcoding in the server. (default false)
+        - q -> QUALITY could be [lq,hq] to low quality and hq for high quality (default lq, opional)
+        - tran -> TRANSCODE could be [true,false] for transcoding in the server. (default false, optional)
+        - pre -> PRELOAD could be [true,false] for preloading. (default false, optional)
 
 **Notes about transcoding:**
 The obtained files without transcoding have better audio quality because comes from the origin without any manipulation, and also are available in the server faster because do not require local processing, but sometimes these files are not syncronic and you can not make partial downloads with the client (Grabwaves)
@@ -197,8 +198,8 @@ The response is a JSON with:
             "f8f890052849dcf95cbe1cb12e40c96alqf.opus"
         ],
         "conversion": [{
-            file:"06298aad9d02fff5244d12c366120ca2lqt.opus", (key)
-            msconverted: 13320500  (hash)
+            file:"06298aad9d02fff5244d12c366120ca2lqt.opus",
+            msconverted: 13320500
             }]
         }
 
