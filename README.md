@@ -22,7 +22,7 @@ See docker hub: https://hub.docker.com/repository/docker/javierenrique00/audioex
 Prerequisites:
 Docker
 
-    docker run --name myaudioextractor --restart always -p 2000:2000 -d javierenrique00/audioextractor-js:1.3.4
+    docker run --name myaudioextractor --restart always -p 2000:2000 -d javierenrique00/audioextractor-js:1.3.5
 
 
 ## Kubernetes installation
@@ -199,10 +199,12 @@ The response is a JSON with:
         ],
         "conversion": [{
             file:"06298aad9d02fff5244d12c366120ca2lqt.opus",
-            msconverted: 13320500
+            msconverted: 13320500,
+            sizeconverted: 0
             }]
         }
 
+If the transcoding is in progress the sizeconverted is allways 0, and if no transcoding only give the size converted.
 
 The file in the server has the following format:
 
@@ -216,7 +218,7 @@ QQ -> can be "lq" or "hq" is the quality, low quality or hight quality of the au
 
 T -> Is transcoding active, could be "t"-> true or "f"-> false
 
-**Parameter fiile**
+**Parameter file**
 Filter the list of complete files, but does not filter the list of conversion files. It´s useful for look for changes in the state of conversion advance wihout waste bandwith.
 
 and all the files are encoded in .opus format.

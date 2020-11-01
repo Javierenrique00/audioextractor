@@ -22,7 +22,7 @@ const cp = require('child_process')
 const BASE_AUDIO_PATH = "audio"
 const PORT = 2000
 const MAX_HOURS_FILES = 24
-const VERSION = "1.3.4"
+const VERSION = "1.3.5"
 
 app.get('/',function(req,res){
     
@@ -252,10 +252,11 @@ function checkCacheConv(){
     cacheTemp.forEach( key =>{
         let dataCache = convCache.get(key)
         let ahora = Date.now()
-        if(((ahora-dataCache.timeSet)>60000) && (dataCache.ms == 0)) forDelete.push(key) //--1 minuto
-        if(((ahora-dataCache.timeSet)>600000) && (dataCache.ms > 0)) forDelete.push(key) //--10 minutos de conversion max
+        if(((ahora-dataCache.timeSet)>600000) && (dataCache.ms == 0)) forDelete.push(key) //--10 minutos de conversion para no transcoding
+        if(((ahora-dataCache.timeSet)>900000) && (dataCache.ms > 0)) forDelete.push(key) //--15 minutos de conversion con transcoding max
     })
     forDelete.forEach( key =>{
+        console.log("Deleting posible stuck conversion:"+key)
         delFile(convCache.get(key).file)
         convCache.del(key)
     })
@@ -286,7 +287,7 @@ function serverTrans(res,filtroFile){
             let cacheTemp = Object.keys(convCache.__data__)
             cacheTemp.forEach( key =>{
                 if(filtroFile==undefined || filtroFile===key){
-                    convList.push({file:key,msconverted:convCache.get(key).ms})
+                    convList.push({file:key,msconverted:convCache.get(key).ms,sizeconverted:convCache.get(key).size})
                 }
             })
 
@@ -307,12 +308,12 @@ function convertToAudioFile(address,res,hq,range,tran,pre){
     let hash = createHash(address) + (hq ? "hq" : "lq") + (tran ? "t" : "f") +".opus"
     let fileLocalPath = BASE_AUDIO_PATH + path.sep + hash
 
-    console.log("Has file:"+fs.existsSync(fileLocalPath)+" has conversion:"+ convCache.has(hash))
+    console.log("hash="+hash+"   Has file:"+fs.existsSync(fileLocalPath)+" has conversion:"+ convCache.has(hash))
 
     checkCacheConv()
 
     if(!fs.existsSync(fileLocalPath) && !convCache.has(hash)){
-        convCache.set(hash,{ms:0,timeSet:Date.now(),file:fileLocalPath})
+        convCache.set(hash,{ms:0,timeSet:Date.now(),file:fileLocalPath,size:0})
 
         let total = 0
         let calidad = 'lowestaudio'
@@ -378,7 +379,7 @@ function convertToAudioFile(address,res,hq,range,tran,pre){
                           let [key, value] = l.trim().split('=');
                           args[key] = value;
                         }
-                        convCache.set(hash,{ms:args["out_time_ms"],timeSet:Date.now(),file:fileLocalPath})
+                        convCache.set(hash,{ms:args["out_time_ms"],timeSet:Date.now(),file:fileLocalPath,size:0})
     
                     })
                     audioStream.pipe(convProcess.stdio[4])
@@ -388,10 +389,10 @@ function convertToAudioFile(address,res,hq,range,tran,pre){
                     let writeStream = fs.createWriteStream(fileLocalPath)
     
                     audioStream.on('data', (data) => {
-                        if(total==0) {
-                            writeStream = fs.createWriteStream(fileLocalPath)
-                        }
+
+                        //console.log("Writing conversion data avance:"+readableBytes( total ))
         
+                        convCache.set(hash,{ms:0,timeSet:Date.now(),file:fileLocalPath,size:total})
                         writeStream.write(data)
                         total = total + data.length
                     })
