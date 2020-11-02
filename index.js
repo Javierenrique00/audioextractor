@@ -22,7 +22,7 @@ const cp = require('child_process')
 const BASE_AUDIO_PATH = "audio"
 const PORT = 2000
 const MAX_HOURS_FILES = 24
-const VERSION = "1.3.5"
+const VERSION = "1.3.6"
 
 app.get('/',function(req,res){
     
