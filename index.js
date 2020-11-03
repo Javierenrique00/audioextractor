@@ -17,12 +17,13 @@ const { stringify } = require('querystring')
 const ytpl = require('ytpl')
 var ffmpeg = require('ffmpeg-static')
 const cp = require('child_process')
+var resolve = require('path').resolve
 
 
 const BASE_AUDIO_PATH = "audio"
 const PORT = 2000
 const MAX_HOURS_FILES = 24
-const VERSION = "1.3.6"
+const VERSION = "1.3.7"
 
 app.get('/',function(req,res){
     
@@ -113,6 +114,14 @@ app.get('/converted',function(reg,res){
     serverTrans(res,file)
 })
 
+app.get('/download',function(reg,res){
+
+    //---Parameter file -> Parametro opcional
+    let file = reg.query.file
+
+    res.type('json')
+    serverTransmit(res,file)
+})
 
 
 console.log("--- audioextractor ---")
@@ -301,6 +310,18 @@ function serverTrans(res,filtroFile){
         }
     })
 
+}
+
+
+function serverTransmit(res,file){
+    let fileLocalPath = BASE_AUDIO_PATH + path.sep + file
+    console.log("Downloadig file:"+file)
+    if(fs.existsSync(fileLocalPath)){
+        serveFile(fileLocalPath,res)
+    }else{
+        //--- no existe el archivo devuelve error
+        serverError(res,"No file found")
+    }
 }
 
 function convertToAudioFile(address,res,hq,range,tran,pre){
@@ -537,6 +558,19 @@ function creaServer(fileLocalPath,res,range){
     purgueFiles(BASE_AUDIO_PATH,fileLocalPath)
 
 }
+
+
+function serveFile(fileLocalPath,res){
+    let ahora = moment()
+    cache.set(fileLocalPath,ahora)
+
+    let fullPath = resolve(fileLocalPath)
+    console.log("Serving file:"+fullPath)
+
+    res.sendFile(fullPath)
+}
+
+
 
 
 //--- https://levelup.gitconnected.com/use-node-js-to-to-create-directories-and-files-734063ce93ec
