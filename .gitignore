@@ -106,3 +106,6 @@ dist
 # Sound files
 audio
 *.mp3
+
+# Thumbnail files
+Thumbnail

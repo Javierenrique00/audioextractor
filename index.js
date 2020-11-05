@@ -18,6 +18,7 @@ const ytpl = require('ytpl')
 var ffmpeg = require('ffmpeg-static')
 const cp = require('child_process')
 var resolve = require('path').resolve
+const convertModule = require("./conv")
 
 
 const BASE_AUDIO_PATH = "audio"
@@ -121,6 +122,20 @@ app.get('/download',function(reg,res){
 
     res.type('json')
     serverTransmit(res,file)
+})
+
+app.get('/tomp3',function(reg,res){
+
+    //---Parameter link
+    let linkforReplace1 = reg.query.link
+    let linkforReplace2 = linkforReplace1.replace("-","/")
+    let linkBase64 = linkforReplace2.replace("_","+")
+
+    let buff = Buffer.from(linkBase64, 'base64')
+    let link = buff.toString('ascii')
+
+    convertModule.convert(link,res,convCache)
+
 })
 
 
@@ -281,7 +296,7 @@ function serverTrans(res,filtroFile){
         if(!err){
 
             files.forEach( file =>{
-                if(file.endsWith(".opus")) {
+                if(file.endsWith(".opus") || file.endsWith(".mp3")) {
                     if(!convCache.has(file)){
                         //--- ya hizo la conversión
                         if(filtroFile==undefined || filtroFile===file){
@@ -566,7 +581,6 @@ function serveFile(fileLocalPath,res){
 
     let fullPath = resolve(fileLocalPath)
     console.log("Serving file:"+fullPath)
-
     res.sendFile(fullPath)
 }
 

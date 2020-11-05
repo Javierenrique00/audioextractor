@@ -225,6 +225,17 @@ and all the files are encoded in .opus format.
 
 Note: Files get purged 24 hours after the creation by default, you can change in the server file index.js in the contant: MAX_HOURS_FILES
 
+
+## CONVERTING A FILE TO MP3
+
+For compatibility a we can convert to mp3 format. Is not so optimal in size and quality but it works inmost of the devices. It adds metadata to title, artist and picture.
+
+In the browser type: http://<SERVER_IP>:2000/tomp3?link=BASE64ENCODED_VIDEO_URL_PATH
+
+To know if the conversion is complete check the conversion state to know if conversión is finish.
+
+
+
 ## GETTING A CONVERTED FILE
 
 To get a converted file you only have to ask http://<SERVER_IP>:2000/download?file=FILEPARAMETER
