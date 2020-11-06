@@ -20,11 +20,13 @@ exports.convert = function(address,res,convCache){
     }else if(fileExist(hash)) {
         sendMsg(res,"ready")
     }else{
-        getBasicInfo(address,res,convCache)
+        sendMsg(res,"inprocess")
+        getBasicInfo(address,res,convCache,hash)
     }
 }
 
 function fileExist(hash){
+    createDir(BASE_AUDIO_PATH)
     let fileLocalPath = BASE_AUDIO_PATH + path.sep + hash
     return (fs.existsSync(fileLocalPath))
 }
@@ -38,8 +40,6 @@ function convertToAudioFile(address,res,videoInfo,thumbnailFileName,convCache){
     let hash = createHash(address) + ".mp3"
     let fileLocalPath = BASE_AUDIO_PATH + path.sep + hash
     let thumbnailPath = BASE_IMG_PATH + path.sep + thumbnailFileName
-
-    convCache.set(hash,{ms:0,timeSet:Date.now(),file:fileLocalPath,size:0})
 
     console.log("thumbnail in:"+thumbnailPath)
 
@@ -65,7 +65,6 @@ function convertToAudioFile(address,res,videoInfo,thumbnailFileName,convCache){
     
     convProcess.on('close',()=>{
         convCache.del(hash)
-        sendMsg(res,"ready")
     })
    
     convProcess.stdio[3].on('data', chunk => {
@@ -89,8 +88,55 @@ function convertToAudioFile(address,res,videoInfo,thumbnailFileName,convCache){
 }
 
 function addMetadata(fileLocalPath,thumbnailPath,videoInfo){
-    let imgBuffer = Buffer.from(fs.readFileSync(thumbnailPath))
 
+    fs.readFile(thumbnailPath,function (err,data){
+        if(err){
+            console.log("Error reading thumbnail file:"+thumbnailPath)
+        }else{
+            let imgBuffer = Buffer.from(data)
+
+            let format = formatImg(thumbnailPath)
+
+            console.log("thumbnail:"+ thumbnailPath +"  format:"+format)
+        
+            //let buffer = fs.readFileSync(fileLocalPath)
+            fs.readFile(fileLocalPath,function(error,buffer){
+                if(error){
+                    console.log("Error reading music file:"+fileLocalPath)
+                }else{
+                    let mp3tag = new MP3Tag(buffer,false)
+                    mp3tag.read()
+                    //console.log(mp3tag.tags)
+                
+                    mp3tag.tags.title = videoInfo.title
+                    mp3tag.tags.artist = videoInfo.channel
+                    mp3tag.tags.comment = 'Cover (front)'
+                    mp3tag.tags.APIC = [{
+                        format: format,
+                        type: 3,
+                        description: '',
+                        data: imgBuffer
+                        }]
+                
+                    mp3tag.save()
+                    if(mp3tag.errorCode > -1){
+                        console.log("-----------error writting Metadata")
+                    }else{
+                        let metadataPath = fileLocalPath
+                        fs.writeFile(metadataPath,Buffer.from(mp3tag.buffer),function(err){
+                            if(err){
+                                console.log("-----------error writting file metadata")
+                            }
+                        })
+                    }
+                }
+            })
+
+        }
+    })
+}
+
+function formatImg(thumbnailPath){
     let format = "image/"
  
     switch(getFileExtension(thumbnailPath)){
@@ -104,35 +150,13 @@ function addMetadata(fileLocalPath,thumbnailPath,videoInfo){
             format = "image/png"
         break;
     }
-
-    console.log("thumbnail:"+ thumbnailPath +"  format:"+format)
-
-    let buffer = fs.readFileSync(fileLocalPath)
-    let mp3tag = new MP3Tag(buffer,true)
-    mp3tag.read()
-    console.log(mp3tag.tags)
-
-    mp3tag.tags.title = videoInfo.title
-    mp3tag.tags.artist = videoInfo.channel
-    mp3tag.tags.comment = 'Cover (front)'
-    mp3tag.tags.APIC = [{
-        format: format,
-        type: 3,
-        description: '',
-        data: imgBuffer
-        }]
-
-    mp3tag.save()
-    if(mp3tag.errorCode > -1){
-        console.log("-----------error writting Metadata")
-    }else{
-        let metadataPath = fileLocalPath
-        fs.writeFileSync(metadataPath,Buffer.from(mp3tag.buffer))
-    }
+    return format
 }
 
 
-function getBasicInfo(address,res,convCache){
+function getBasicInfo(address,res,convCache,hash){
+    let fileLocalPath = BASE_AUDIO_PATH + path.sep + hash
+    convCache.set(hash,{ms:0,timeSet:Date.now(),file:fileLocalPath,size:0})
     let info = ytdl.getBasicInfo(address)
     
     info.then(

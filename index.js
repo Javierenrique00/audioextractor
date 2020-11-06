@@ -276,6 +276,9 @@ function checkCacheConv(){
     cacheTemp.forEach( key =>{
         let dataCache = convCache.get(key)
         let ahora = Date.now()
+
+
+        if(((ahora-dataCache.timeSet)>15000) && (dataCache.ms == 0) && (dataCache.size == 0)) forDelete.push(key)  //--15 segundos para transcoding que no avanza
         if(((ahora-dataCache.timeSet)>600000) && (dataCache.ms == 0)) forDelete.push(key) //--10 minutos de conversion para no transcoding
         if(((ahora-dataCache.timeSet)>900000) && (dataCache.ms > 0)) forDelete.push(key) //--15 minutos de conversion con transcoding max
     })
