@@ -6,6 +6,10 @@ Audioextractor can force transcoding of audio with the ffmpeg library using [ffm
 
 Ready to be deployed locally, in docker containers or a Kubernetes cluster.
 
+## Errors in playlist and search videos
+
+Due to an faulty libraries for searching and info playlist; these services are not working now. We are working new versions to fix errors.
+
 ## Local installation.
 
 Prerequisites:
@@ -22,7 +26,7 @@ See docker hub: https://hub.docker.com/repository/docker/javierenrique00/audioex
 Prerequisites:
 Docker
 
-    docker run --name myaudioextractor --restart always -p 2000:2000 -d javierenrique00/audioextractor-js:1.3.7
+    docker run --name myaudioextractor --restart always -p 2000:2000 -d javierenrique00/audioextractor-js:1.3.9
 
 
 ## Kubernetes installation

@@ -24,7 +24,7 @@ const convertModule = require("./conv")
 const BASE_AUDIO_PATH = "audio"
 const PORT = 2000
 const MAX_HOURS_FILES = 24
-const VERSION = "1.3.7"
+const VERSION = "1.3.9"
 
 app.get('/',function(req,res){
     
@@ -120,8 +120,12 @@ app.get('/download',function(reg,res){
     //---Parameter file -> Parametro opcional
     let file = reg.query.file
 
+    //---get header range
+    let range = reg.headers.range
+    console.log("Header_range:"+range)
+
     res.type('json')
-    serverTransmit(res,file)
+    serverTransmit(res,file,range)
 })
 
 app.get('/tomp3',function(reg,res){
@@ -159,9 +163,9 @@ function getBasicInfo(address,res){
                 if(isNaN(checkDuration)) checkDuration = 0
                 related.push({id:it.id,
                             title:it.title,
-                            author:it.author,
+                            author:it.author.name,
                             duration:checkDuration,
-                            iUrl:it.video_thumbnail
+                            iUrl:it.thumbnails[0].url  //---antes era: iUrl:it.video_thumbnail
                         })
             })
             let videoDetails = result.videoDetails
@@ -180,6 +184,18 @@ function getBasicInfo(address,res){
                  res.end(JSON.stringify(videoInfo))
         }
     )
+}
+
+function serverTransmit(res,file,range){
+    let fileLocalPath = BASE_AUDIO_PATH + path.sep + file
+    console.log("Downloadig file:"+file)
+    if(fs.existsSync(fileLocalPath)){
+        //creaServer(fileLocalPath,res,range)
+        serveFile(fileLocalPath,res)
+    }else{
+        //--- no existe el archivo devuelve error
+        serverError(res,"No file found")
+    }
 }
 
 function getSearch(question,limit,res){
@@ -224,6 +240,9 @@ function getSearch(question,limit,res){
 function getPlayList(link,res){
     console.log("Finding Playlist:"+link)
     ytpl(link,{limit:Infinity}).then( playlist => {
+
+        console.log("Playlist-->"+JSON.stringify(playlist)) //--hay un error el las play list esperando el arreglo
+
         let salida = {}
         salida.id = playlist.id
         salida.url = playlist.url
@@ -330,17 +349,6 @@ function serverTrans(res,filtroFile){
 
 }
 
-
-function serverTransmit(res,file){
-    let fileLocalPath = BASE_AUDIO_PATH + path.sep + file
-    console.log("Downloadig file:"+file)
-    if(fs.existsSync(fileLocalPath)){
-        serveFile(fileLocalPath,res)
-    }else{
-        //--- no existe el archivo devuelve error
-        serverError(res,"No file found")
-    }
-}
 
 function convertToAudioFile(address,res,hq,range,tran,pre){
     createDir(BASE_AUDIO_PATH)
@@ -535,7 +543,6 @@ function creaServer(fileLocalPath,res,range){
     //--- lo pone para no borrarlo mientras se envía
     let ahora = moment()
     cache.set(fileLocalPath,ahora)
-
 
     let stat = fs.statSync(fileLocalPath)
     let total = stat.size
