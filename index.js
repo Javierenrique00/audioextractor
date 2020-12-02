@@ -24,7 +24,7 @@ const convertModule = require("./conv")
 const BASE_AUDIO_PATH = "audio"
 const PORT = 2000
 const MAX_HOURS_FILES = 24
-const VERSION = "1.3.9"
+const VERSION = "1.4.0"
 
 app.get('/',function(req,res){
     
@@ -241,7 +241,7 @@ function getPlayList(link,res){
     console.log("Finding Playlist:"+link)
     ytpl(link,{limit:Infinity}).then( playlist => {
 
-        console.log("Playlist-->"+JSON.stringify(playlist)) //--hay un error el las play list esperando el arreglo
+        //console.log("Playlist-->"+JSON.stringify(playlist)) 
 
         let salida = {}
         salida.id = playlist.id
@@ -249,7 +249,7 @@ function getPlayList(link,res){
         salida.title = playlist.title
         salida.items = []
         playlist.items.forEach( item =>{  
-             salida.items.push({url : item.url_simple,title:item.title,thumbnail:item.thumbnail,duration:convertTimeStrtoSeconds(item.duration),author:getAuthor(item)})
+             salida.items.push({url : item.shortUrl,title:item.title,thumbnail:item.thumbnail,duration:convertTimeStrtoSeconds(item.duration),author:getAuthor(item)})
         })
         salida.total_items = playlist.items.length
         salida.error = false
