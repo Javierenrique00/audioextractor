@@ -105,20 +105,28 @@ function addMetadata(fileLocalPath,thumbnailPath,videoInfo){
                     console.log("Error reading music file:"+fileLocalPath)
                 }else{
                     let mp3tag = new MP3Tag(buffer,false)
-                    mp3tag.read()
+                    mp3tag.read({
+                        id3v1: false // Ignore ID3v1 tags when reading
+                      })
                     //console.log(mp3tag.tags)
                 
                     mp3tag.tags.title = videoInfo.title
                     mp3tag.tags.artist = videoInfo.channel
                     mp3tag.tags.comment = 'Cover (front)'
-                    mp3tag.tags.APIC = [{
-                        format: format,
+                
+
+                    mp3tag.tags.v2.APIC = [{
+                        "format": format,
                         type: 3,
-                        description: '',
+                        description: 'Cover',
                         data: imgBuffer
                         }]
                 
-                    mp3tag.save()
+                    mp3tag.save({
+                        strict: true, // Strict mode, validates all inputs against the standards. See id3.org
+                        // ID3v2 Options
+                        id3v2: { padding: 4096 }
+                      })
                     if(mp3tag.errorCode > -1){
                         console.log("-----------error writting Metadata")
                     }else{

@@ -24,7 +24,7 @@ const convertModule = require("./conv")
 const BASE_AUDIO_PATH = "audio"
 const PORT = 2000
 const MAX_HOURS_FILES = 24
-const VERSION = "1.4.0"
+const VERSION = "1.4.1"
 
 app.get('/',function(req,res){
     
