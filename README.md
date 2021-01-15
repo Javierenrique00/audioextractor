@@ -8,8 +8,8 @@ Ready to be deployed locally, in docker containers or a Kubernetes cluster.
 
 ## Error in search videos / fixed playlist
 
-- Playlist is fixed in version 1.4.0 -> update library node-ytpl to version 2.0.0-alpha.3
-- Search is not working because a faulty library node-ytsr.
+- ytpl Playlist is fixed in version 1.4.0
+- ytsr Search is fixed in 3.2.1
 
 ## Local installation.
 

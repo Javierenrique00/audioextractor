@@ -24,7 +24,7 @@ const convertModule = require("./conv")
 const BASE_AUDIO_PATH = "audio"
 const PORT = 2000
 const MAX_HOURS_FILES = 24
-const VERSION = "1.4.1"
+const VERSION = "1.4.2"
 
 app.get('/',function(req,res){
     
@@ -173,9 +173,9 @@ function getBasicInfo(address,res){
             if(isNaN(duracionSeg)) duracionSeg = 0 //--asegurarse que es un numero
             let videoInfo = {title:videoDetails.title,
                  channel:videoDetails.ownerChannelName,
-                 thumbnailUrl:videoDetails.thumbnail.thumbnails[0].url,
-                 width:videoDetails.thumbnail.thumbnails[0].width,
-                 height:videoDetails.thumbnail.thumbnails[0].height,
+                 thumbnailUrl:videoDetails.thumbnails[0].url,
+                 width:videoDetails.thumbnails[0].width,
+                 height:videoDetails.thumbnails[0].height,
                  duration:duracionSeg,
                  related:related
                  }
@@ -200,14 +200,16 @@ function serverTransmit(res,file,range){
 
 function getSearch(question,limit,res){
 
+    console.log("Buscando:"+question)
+
     ytsr.getFilters(question).then(async filters1 => {
-        filter1 = filters1.get('Type').find(o => o.name === 'Video')
+        const filter1 = filters1.get('Type').get('Video')
 
         const options = {
             limit: limit,
             nextpageRef: filter1.ref
           }
-        let promise = ytsr(null,options)
+        let promise = ytsr(filter1.url,options)
     
         promise.then( results =>{
 
@@ -223,9 +225,7 @@ function getSearch(question,limit,res){
             })
 
             res.send(JSON.stringify(salida))
-
-            //res.send(JSON.stringify(results))
-            console.log("Search:"+question+ " Limit:"+limit)
+            console.log("Search:"+question+ " Limit:"+limit+" Results:"+salida.items.length)
         }).catch((reason)=>{
             console.error("Promise error:"+reason)
         }).finally(()=>{
@@ -241,7 +241,7 @@ function getPlayList(link,res){
     console.log("Finding Playlist:"+link)
     ytpl(link,{limit:Infinity}).then( playlist => {
 
-        //console.log("Playlist-->"+JSON.stringify(playlist)) 
+        console.log("Playlist-->"+JSON.stringify(playlist)) 
 
         let salida = {}
         salida.id = playlist.id
@@ -249,7 +249,12 @@ function getPlayList(link,res){
         salida.title = playlist.title
         salida.items = []
         playlist.items.forEach( item =>{  
-             salida.items.push({url : item.shortUrl,title:item.title,thumbnail:item.thumbnail,duration:convertTimeStrtoSeconds(item.duration),author:getAuthor(item)})
+             salida.items.push({
+                 url : item.shortUrl,
+                 title:item.title,
+                 thumbnail:item.bestThumbnail.url
+                 ,duration:convertTimeStrtoSeconds(item.duration),
+                 author:getAuthor(item)})
         })
         salida.total_items = playlist.items.length
         salida.error = false
