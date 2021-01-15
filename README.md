@@ -6,7 +6,7 @@ Audioextractor can force transcoding of audio with the ffmpeg library using [ffm
 
 Ready to be deployed locally, in docker containers or a Kubernetes cluster.
 
-## Error in search videos / fixed playlist
+## Fixed search / fixed playlist
 
 - ytpl Playlist is fixed in version 1.4.0
 - ytsr Search is fixed in 3.2.1
