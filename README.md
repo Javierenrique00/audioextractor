@@ -4,6 +4,11 @@ AudioExtractor is a server that uses [node-ytdl-core](https://github.com/fent/no
 
 Audioextractor can force transcoding of audio with the ffmpeg library using [ffmpeg-static](https://github.com/eugeneware/ffmpeg-static)
 
+Now with web scraping can support links from another sources, this scraping is static so it needs to be updated according the changes in the format. (Some my not work)
+Web supported:
+        - bitchute
+        - ayl.tv
+
 Ready to be deployed locally, in docker containers or a Kubernetes cluster.
 
 ## Fixed search / fixed playlist

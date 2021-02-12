@@ -2,10 +2,9 @@
 
 var express = require('express')
 var app = express()
-const fs = require('fs')
-const path = require('path')
+var fs = require('fs')  //--- ojo antes era const
+var path = require('path') //--- ojo antes era const
 const ytdl = require('ytdl-core')
-var crypto = require('crypto')
 var moment = require('moment')
 const { get } = require('http')
 var MapCache = require('map-cache')
@@ -19,12 +18,19 @@ var ffmpeg = require('ffmpeg-static')
 const cp = require('child_process')
 var resolve = require('path').resolve
 const convertModule = require("./conv")
+const scrabModule = require("./scrab")
+const comunTools = require("./comunTools")
+const fetch = require('node-fetch')
 
 
 const BASE_AUDIO_PATH = "audio"
 const PORT = 2000
 const MAX_HOURS_FILES = 24
-const VERSION = "1.4.2"
+const VERSION = "1.4.4"
+
+const SERVICE_BITCHUTE = "www.bitchute.com"
+const SERVICE_AYLTV = "ayl.tv"
+
 
 app.get('/',function(req,res){
     
@@ -152,38 +158,46 @@ var server = app.listen(PORT,function(){ })
 
 
 function getBasicInfo(address,res){
-    let info = ytdl.getBasicInfo(address)
-    
-    info.then(
-        result =>{
-            let related = []
-            let relacionados = result.related_videos
-            relacionados.forEach( it =>{
-                let checkDuration = it.length_seconds
-                if(isNaN(checkDuration)) checkDuration = 0
-                related.push({id:it.id,
-                            title:it.title,
-                            author:it.author.name,
-                            duration:checkDuration,
-                            iUrl:it.thumbnails[0].url  //---antes era: iUrl:it.video_thumbnail
-                        })
-            })
-            let videoDetails = result.videoDetails
-            let duracionSeg = parseInt( videoDetails.lengthSeconds)
-            if(isNaN(duracionSeg)) duracionSeg = 0 //--asegurarse que es un numero
-            let videoInfo = {title:videoDetails.title,
-                 channel:videoDetails.ownerChannelName,
-                 thumbnailUrl:videoDetails.thumbnails[0].url,
-                 width:videoDetails.thumbnails[0].width,
-                 height:videoDetails.thumbnails[0].height,
-                 duration:duracionSeg,
-                 related:related
-                 }
-                 //res.setHeader('Content-Type', 'application/json')
-                 res.type('json')
-                 res.end(JSON.stringify(videoInfo))
-        }
-    )
+
+    if(address.includes(SERVICE_BITCHUTE)){
+        scrabModule.parseBitChute(address,res)
+      } else if(address.includes(SERVICE_AYLTV)){
+        scrabModule.parseAyltv(address,res)
+      } else{
+        //--- youtube downloader
+        let info = ytdl.getBasicInfo(address)
+        info.then(
+            result =>{
+                let related = []
+                let relacionados = result.related_videos
+                relacionados.forEach( it =>{
+                    let checkDuration = it.length_seconds
+                    if(isNaN(checkDuration)) checkDuration = 0
+                    related.push({id:it.id,
+                                title:it.title,
+                                author:it.author.name,
+                                duration:checkDuration,
+                                iUrl:it.thumbnails[0].url  //---antes era: iUrl:it.video_thumbnail
+                            })
+                })
+                let videoDetails = result.videoDetails
+                let duracionSeg = parseInt( videoDetails.lengthSeconds)
+                if(isNaN(duracionSeg)) duracionSeg = 0 //--asegurarse que es un numero
+                let videoInfo = {title:videoDetails.title,
+                     channel:videoDetails.ownerChannelName,
+                     thumbnailUrl:videoDetails.thumbnails[0].url,
+                     width:videoDetails.thumbnails[0].width,
+                     height:videoDetails.thumbnails[0].height,
+                     duration:duracionSeg,
+                     urlVideo:"",
+                     related:related
+                     }
+                     //res.setHeader('Content-Type', 'application/json')
+                     res.type('json')
+                     res.end(JSON.stringify(videoInfo))
+            }
+        )
+      }
 }
 
 function serverTransmit(res,file,range){
@@ -313,6 +327,8 @@ function checkCacheConv(){
     })
 }
 
+
+//---check list status
 function serverTrans(res,filtroFile){
 
     checkCacheConv()
@@ -357,7 +373,9 @@ function serverTrans(res,filtroFile){
 
 function convertToAudioFile(address,res,hq,range,tran,pre){
     createDir(BASE_AUDIO_PATH)
-    let hash = createHash(address) + (hq ? "hq" : "lq") + (tran ? "t" : "f") +".opus"
+    let isYoutube = comunTools.isYoutubeLink(address)
+    let hash = comunTools.createHash(address) + (hq ? "hq" : "lq") + (tran ? "t" : "f") + (!tran ? ".opus" : ".mp3")
+    //let hash = comunTools.createHash(address) + (hq ? "hq" : "lq") + (tran ? "t" : "f") + ".opus"
     let fileLocalPath = BASE_AUDIO_PATH + path.sep + hash
 
     console.log("hash="+hash+"   Has file:"+fs.existsSync(fileLocalPath)+" has conversion:"+ convCache.has(hash))
@@ -378,22 +396,41 @@ function convertToAudioFile(address,res,hq,range,tran,pre){
         }
         console.log('Asking for video:' + address)
             return new Promise((resolve,reject) => {
-                let audioStream = ytdl(address,{ filter: 'audioonly' , quality: calidad})
-
+                
                 if(tran){
+                    let audioStream = null
+                    if(isYoutube){
+                        audioStream = ytdl(address,{ filter: 'audioonly' , quality: calidad})
+                    }
+
+                    // let convProcess = cp.spawn(ffmpeg, [
+                    //     '-loglevel', '0', '-hide_banner',
+                    //     '-progress', 'pipe:3',
+                    //     '-i', 'pipe:4',
+                    //     '-c:a','libopus','-b:a',bitRate,'-ac',canales,                        
+                    //     '-f', 'ogg', 'pipe:5',
+                    // ], {
+                    //     windowsHide: true,
+                    //     stdio: [
+                    //     'inherit', 'inherit', 'inherit',
+                    //     'pipe', 'pipe', 'pipe',
+                    //     ],
+                    // })
+
                     let convProcess = cp.spawn(ffmpeg, [
                         '-loglevel', '0', '-hide_banner',
                         '-progress', 'pipe:3',
-                        '-i', 'pipe:4',
-                        '-c:a','libopus','-b:a',bitRate,'-ac',canales,                        
-                        '-f', 'ogg', 'pipe:5',
+                        '-i', (isYoutube ? 'pipe4':address) ,
+                        '-c:a','libmp3lame',                        
+                        '-f','mp3','pipe:5',
                     ], {
                         windowsHide: true,
                         stdio: [
                         'inherit', 'inherit', 'inherit',
-                        'pipe', 'pipe', 'pipe',
+                        'pipe', 'pipe','pipe'
                         ],
                     })
+                    
     
                     convProcess.on('close',()=>{
                         //--- checkea que se haya creado el archivo
@@ -434,10 +471,14 @@ function convertToAudioFile(address,res,hq,range,tran,pre){
                         convCache.set(hash,{ms:args["out_time_ms"],timeSet:Date.now(),file:fileLocalPath,size:0})
     
                     })
-                    audioStream.pipe(convProcess.stdio[4])
+
+                    if(isYoutube){
+                        audioStream.pipe(convProcess.stdio[4])
+                    }                   
                     convProcess.stdio[5].pipe(fs.createWriteStream(fileLocalPath))
     
                 }else{
+                    let audioStream = ytdl(address,{ filter: 'audioonly' , quality: calidad})
                     let writeStream = fs.createWriteStream(fileLocalPath)
     
                     audioStream.on('data', (data) => {
@@ -612,12 +653,6 @@ const createDir = (dirPath) => {
         }
 
     })
-}
-
-//---https://gist.github.com/kitek/1579117
-function createHash(data){
-    return crypto.createHash('md5').update(data).digest("hex")
-
 }
 
 //----https://ourcodeworld.com/articles/read/713/converting-bytes-to-human-readable-values-kb-mb-gb-tb-pb-eb-zb-yb-with-javascript
