@@ -11,10 +11,12 @@ Web supported:
 
 Ready to be deployed locally, in docker containers or a Kubernetes cluster.
 
-## Fixed search / fixed playlist
+## Fixed 1.4.5 audioextractor
 
-- ytpl Playlist is fixed in version 1.4.0
-- ytsr Search is fixed in 3.2.1
+Due to Youtube change, the service is fixed in 1.4.5 version with:
+    "ytdl-core": 4.9.0
+    "ytpl": 2.2.1
+    "ytsr": 3.5.0
 
 ## Local installation.
 
@@ -32,7 +34,7 @@ See docker hub: https://hub.docker.com/repository/docker/javierenrique00/audioex
 Prerequisites:
 Docker
 
-    docker run --name myaudioextractor --restart always -p 2000:2000 -d javierenrique00/audioextractor-js:1.4.1
+    docker run --name myaudioextractor --restart always -p 2000:2000 -d javierenrique00/audioextractor-js:1.4.5
 
 
 ## Kubernetes installation

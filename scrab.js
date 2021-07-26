@@ -104,13 +104,53 @@ function parseVideoPress(text,title,res){
     showDataColected(urlPoster,urlVideo,title,"Adoración y Liberación",res)
 }
 
-
 function getVideoPressId(url){
     let parts = url.split("/")
     let lastIndex = parts.length
     let last = parts[lastIndex-1]
     return last
     }
+
+exports.parseRumble = function(url,res){
+  console.log("Rumble url:"+url)
+  fetch(url)
+  .then(respuesta => respuesta.text())
+  .then(text => {
+  try {
+    parseRumble(text,res)
+  } catch (e) {
+      console.log("-- Error parsing data")
+      res.end("error")
+  }
+  })
+}
+
+
+function parseRumble(text,res){
+  console.log("Parsing Data:")
+  const root = HTMLParser.parse(text)
+  const videoNode = root.querySelector("#videoPlayer")
+
+  const style = videoNode.rawText
+
+  console.log("style:"+style)
+
+  // const urlPoster = videoNode.getAttribute("poster")
+  // const urlVideo = videoNode.getAttribute("src")
+  // const titleNode = root.querySelector("h1")
+  // const title = titleNode.text
+  // const channelNode = root.querySelector(".media-heading-name")
+  // const channel = channelNode.text
+  //showDataColected(urlPoster,urlVideo,title,channel,res)
+
+  // console.log("Poster:"+urlPoster)
+  // console.log("Video:"+urlVideo)
+
+  res.end("error")
+}
+
+
+
 
 function showDataColected(urlPoster,urlVideo,title,channel,res){
     console.log("Poster:"+urlPoster)

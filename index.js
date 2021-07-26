@@ -26,10 +26,11 @@ const fetch = require('node-fetch')
 const BASE_AUDIO_PATH = "audio"
 const PORT = 2000
 const MAX_HOURS_FILES = 24
-const VERSION = "1.4.4"
+const VERSION = "1.4.5"
 
 const SERVICE_BITCHUTE = "www.bitchute.com"
 const SERVICE_AYLTV = "ayl.tv"
+const SERVICE_RUMBLE = "rumble.com"
 
 
 app.get('/',function(req,res){
@@ -163,7 +164,10 @@ function getBasicInfo(address,res){
         scrabModule.parseBitChute(address,res)
       } else if(address.includes(SERVICE_AYLTV)){
         scrabModule.parseAyltv(address,res)
-      } else{
+      } else if(address.includes(SERVICE_RUMBLE)){
+        scrabModule.parseRumble(address,res)
+      }
+      else{
         //--- youtube downloader
         let info = ytdl.getBasicInfo(address)
         info.then(
