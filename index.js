@@ -21,12 +21,14 @@ const convertModule = require("./conv")
 const scrabModule = require("./scrab")
 const comunTools = require("./comunTools")
 const fetch = require('node-fetch')
+const { base58_to_binary } = require('base58-js')
+const { binary_to_base58 } = require('base58-js')
 
 
 const BASE_AUDIO_PATH = "audio"
 const PORT = 2000
 const MAX_HOURS_FILES = 24
-const VERSION = "1.4.5"
+const VERSION = "1.4.6"
 
 const SERVICE_BITCHUTE = "www.bitchute.com"
 const SERVICE_AYLTV = "ayl.tv"
@@ -146,6 +148,19 @@ app.get('/tomp3',function(reg,res){
     let link = buff.toString('ascii')
 
     convertModule.convert(link,res,convCache)
+
+})
+
+app.get('/playnow',function(req,res){
+
+    //---Parameter link
+    let link = new TextDecoder().decode(base58_to_binary(req.query.link))
+
+    //---get header range
+    let range = req.headers.range
+    console.log("Header_range:"+range)
+
+    streamLink(link,res,range)
 
 })
 
@@ -634,6 +649,42 @@ function creaServer(fileLocalPath,res,range){
 
 }
 
+
+function streamLink(link,res,range){
+
+    let myPromise = ytdl.getInfo(link)
+
+    myPromise.then(
+        function(info){
+            let audioFormats = ytdl.filterFormats(info.formats,'audioonly')
+            let minAudioTag = 'NA'
+            let minBitRate = 10000000
+            let minFormat = 'NA'
+            //-- Select smallest
+            audioFormats.forEach((audio)=>{
+                if(audio.bitrate<minBitRate){
+                    minAudioTag = audio.itag
+                    minBitRate = audio.bitrate
+                    minFormat = audio
+                } 
+            })
+            if(minAudioTag!='NA'){
+                console.log("--MinBitrate:"+minBitRate + "Minitag:"+minAudioTag)
+                let total = minFormat.contentLength
+                let newLink = minFormat.url
+                let linkBase58 = binary_to_base58(new TextEncoder().encode(newLink))
+                console.log(linkBase58)
+                res.end(linkBase58)
+
+
+
+            }else res.end("No bitrate")
+        },
+        function(onrejected){
+            console.log("Error:"+onrejected)
+            res.end("error")
+        })
+}
 
 function serveFile(fileLocalPath,res){
     let ahora = moment()
