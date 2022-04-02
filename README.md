@@ -11,13 +11,6 @@ Web supported:
 
 Ready to be deployed locally, in docker containers or a Kubernetes cluster.
 
-## Fixed 1.4.5 audioextractor
-
-Due to Youtube change, the service is fixed in 1.4.5 version with:
-    "ytdl-core": 4.9.0
-    "ytpl": 2.2.1
-    "ytsr": 3.5.0
-
 ## Local installation.
 
 Prerequisites:
@@ -255,6 +248,17 @@ To get a converted file you only have to ask http://<SERVER_IP>:2000/download?fi
 FILEPARAMETER is not optional.
 
 If the file is not found it returns "No file found" and 500 status message in the header.
+
+## PLAY NOW OPTION
+
+To get a link of a youtube only audio git the less quality for use low data on mobile devices
+
+ http://<SERVER_IP>:2000/playnow?LINK=BASE58URL
+
+ Where BASE58URL is the conversion of the url youtube video to a Base58
+
+ Returns a url link in base58 ready to be streamed to a player.
+
 
 
 ## Android App
