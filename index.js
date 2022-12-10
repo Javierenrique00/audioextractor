@@ -28,7 +28,7 @@ const { binary_to_base58 } = require('base58-js')
 const BASE_AUDIO_PATH = "audio"
 const PORT = 2000
 const MAX_HOURS_FILES = 24
-const VERSION = "1.4.6"
+const VERSION = "1.4.7"
 
 const SERVICE_BITCHUTE = "www.bitchute.com"
 const SERVICE_AYLTV = "ayl.tv"

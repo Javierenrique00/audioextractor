@@ -9,19 +9,19 @@
   "author": "Javier Ramirez",
   "license": "ISC",
   "dependencies": {
-    "base58-js": "^1.0.0",
-    "express": "^4.17.1",
-    "ffmpeg-static": "^4.2.7",
+    "base58-js": "^1.0.5",
+    "express": "^4.18.2",
+    "ffmpeg-static": "^4.4.1",
     "ffprobe": "^1.1.2",
-    "ffprobe-static": "^3.0.0",
+    "ffprobe-static": "^3.1.0",
     "map-cache": "^0.2.2",
-    "moment": "^2.29.1",
+    "moment": "^2.29.4",
     "mp3tag": "^1.0.3",
-    "mp3tag.js": "^3.0.0",
-    "node-fetch": "^2.6.1",
-    "node-html-parser": "^2.1.0",
-    "ytdl-core": "^4.11.0",
-    "ytpl": "^2.2.1",
-    "ytsr": "^3.5.0"
+    "mp3tag.js": "^3.3.2",
+    "node-fetch": "^2.6.7",
+    "node-html-parser": "^2.2.1",
+    "ytdl-core": "^4.11.2",
+    "ytpl": "^2.3.0",
+    "ytsr": "^3.8.0"
   }
 }
